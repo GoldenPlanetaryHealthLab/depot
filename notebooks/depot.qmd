@@ -1,7 +1,86 @@
 ---
-title: "depot"
+title: "`depot`"
+subtitle: "The Frontier’s catalog of developing scientific datasets"
 ---
 
-## Quarto
+## Introduction
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+`depot` is a tool to catalog prospect[^1] datasets and make them discoverable across the Frontier
+
+<!-- narrative -->
+
+## Motivation
+
+In modern research computing, accessing data is often a bottleneck. On
+the one hand, an HPC cluster is simply a shared Linux file system with very little
+guardrails and systems for data governance, and researchers technically
+_can_ just move files around at their leisure. As a lab scales — both
+in its workforce/user base, and its methods sophistication — this model quickly
+devolves and leads to messy workspaces, poorly managed data, and an
+increasing risk of irreproducibility. On the other hand, data governance
+(such as that imposed by commercial data warehouse tools like AWS, Spark,
+Databricks) can be overly strict, leading to workflows that incur several
+days or weeks of bureaucracy just to do the simple task of accessing a file.
+
+To maintain reproducibility and sufficient data governance while ensuring a 
+speedy turnover of scientific assets, research computing needs a way to both
+track data curation steps, but also provide quick access to data with the knowledge
+that it may not yet be fully curated and certified. In industry, there are often
+several "layers" of data in a data lakehouse, where raw data is considered
+completely uncurated, while perfect data has been vetted, certified, tested,
+documented, and published for access. In between these two extremes, there
+can exist a squishy middle layer of data. To catalogue this middle layer,
+we introduce `depot`, a tool for cataloging datasets that are in the process of being
+curated, but are not yet fully certified for use in publications on the Frontier.
+
+## Usage
+
+### User Story
+
+As research groups grow, datasets often become trapped inside individual 
+projects and pipelines. Even when data exists and is technically 
+accessible, other researchers may not know it exists, what transformations 
+have been applied, or whether it is suitable for their work.
+
+With `depot`, the researcher can query the catalog of developing 
+datasets to find out the status of their data, and access it if it's available.
+
+<!-- check the catalog -->
+
+The researcher can decide to use `stagecoach` to stage the data for their
+analysis, but must do so with the understanding that the data is subject
+to change:
+
+<!-- data contract: researcher must review the transformations and status of the data before continuing -->
+
+After some time, the researcher may find that the data
+requires some further transformations for their analysis; they can
+submit a pull request to add their transformations to the curation pipeline:
+
+<!-- researcher interacts with the data, adds steps, submits to original curation pipeline -->
+
+After some time, the data in the catalog is updated to include the additional
+curation steps, and the researcher can continue with their analysis:
+
+### API
+
+## Internals
+
+There have been several inventions across data science and software engineering
+aimed at solving the problem of data cataloging and governance. For The Frontier,
+we elected to build `depot` borrowing from some of these best practices, while
+also catering to the unique needs and workflows of our lab. While `prospectors` are 
+dedicated, modular data curation pipelines, and `stagecoach` acts as a data 
+staging workhorse, ferrying data back and forth between folders and the lab's 
+datalake, `depot`'s main function is to keep track of `prospector` outputs,
+creating visibility into the data curation process. To do this, `depot` 
+assumes that a `prospector` has produced one or more datasets suitable for 
+reuse by others in the lab. `depot` then uses `datalad` to begin the process of
+version control specifically for datasets — dataset registration. After this, `depot` employs the 
+`frictionless` data package specification to create a data package for the dataset — 
+this tool intended to aid in creating and maintaining metadata about the dataset, 
+such as its name, description, and schema. `depot` then uses `datalad` one last 
+time to push this data package in a central location (the `gold_mine/02_prospects` 
+directory), documenting the action, and providing it to researchers and other tools in the lab.
+
+[^1]: A Prospect is a dataset that has undergone some level of curation and is considered useful for exploration and analysis, but has not yet been formally governed, validated, or certified by the Treasury.

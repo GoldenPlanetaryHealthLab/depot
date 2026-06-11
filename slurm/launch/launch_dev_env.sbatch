@@ -5,8 +5,8 @@
 #SBATCH -c 4
 
 # Logging
-#SBATCH --output=/n/holylabs/LABS/cgolden_lab/Lab/frontier/works/prospectors/prospectorERA5Land/slurm/launch/logs/launch_%j.out
-#SBATCH --error=/n/holylabs/LABS/cgolden_lab/Lab/frontier/works/prospectors/prospectorERA5Land/slurm/launch/logs/launch_%j.err
+#SBATCH --output=/n/holylabs/LABS/cgolden_lab/Lab/frontier/works/depot/slurm/launch/logs/launch_%j.out
+#SBATCH --error=/n/holylabs/LABS/cgolden_lab/Lab/frontier/works/depot/slurm/launch/logs/launch_%j.err
 
 set -o errexit -o nounset -o pipefail
 
@@ -26,12 +26,12 @@ module purge
 source /n/home03/ttapera/software/spack/share/spack/setup-env.sh
 spack env activate -d "$PROJECT_DIR"
 
-which R
-which Rscript
-which gcc
-which g++
-R CMD config CC
-R CMD config CXX17
+#which R
+#which Rscript
+#which gcc
+#which g++
+#R CMD config CC
+#R CMD config CXX17
 
 curl -Lk 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' \
   | tar -C "$MY_SCRATCH" -xzf -
