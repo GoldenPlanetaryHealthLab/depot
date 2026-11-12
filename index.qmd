@@ -1,0 +1,9 @@
+---
+title: Depot data catalogue
+---
+
+Prospects can change between versions. Refined releases follow a stricter schedule.
+
+Only validated publications verified by fresh retrieval are listed.
+
+No verified datasets are available yet.

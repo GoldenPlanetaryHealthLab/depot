@@ -1,0 +1,162 @@
+---
+title: "DataLad publication"
+filters:
+  - quarto-emit
+emit:
+  project_root: ..
+---
+
+Each dataset has one managed DataLad repository containing releases/VERSION and a separate local RIA store at TARGET_ROOT/ID. DataLad configures a Git sibling plus an annex storage sibling. The store is not a populated working tree, and no parent dataset is assumed.
+
+::: {.manual-prereq}
+Use Python 3.14, the locked Python dependencies, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
+:::
+
+## Save, publish, and retrieve
+
+### `publication.py`
+
+::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/publication.py"}
+
+```python
+"""DataLad CLI publication to local RIA stores, with fresh-clone verification."""
+
+from collections.abc import Callable
+from pathlib import Path
+import shutil
+import subprocess
+from tempfile import TemporaryDirectory
+
+from .config import Config, contained
+from .errors import DepotError
+from .validation import fingerprint, validate_package
+
+
+def command(args: list[str], cwd: Path | None = None) -> str:
+    try:
+        result = subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True)
+        return result.stdout.strip()
+    except FileNotFoundError as exc:
+        raise DepotError(
+            "missing_tool", f"Install {args[0]} and make it available on PATH."
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        # Raw stdout/stderr can contain credentials, remote URLs, and private paths.
+        raise DepotError(
+            "command_failed",
+            f"{args[0]} command failed; check tools, target access, and permissions.",
+            {"operation": args[1], "exit_code": exc.returncode},
+        ) from exc
+
+
+def publish(
+    config: Config,
+    manifest: dict,
+    version: str,
+    staged: Path,
+    expected: str,
+    on_saved: Callable[[str], None] | None = None,
+) -> dict:
+    dataset_id = manifest["id"]
+    dataset = config.dataset_path(config.workspace, dataset_id)
+    target = config.targets[manifest["destination"]["target"]]
+    store = contained(target.root / dataset_id, target.root)
+    store_url = "ria+" + store.as_uri()
+    clone_url = store_url + "#~" + dataset_id
+    config.workspace.mkdir(parents=True, exist_ok=True)
+    if not (dataset / ".datalad/config").is_file():
+        command(["datalad", "create", "-d", str(dataset), "-D", f"Depot dataset {dataset_id}"])
+    destination = contained(dataset / "releases" / version, dataset)
+    if destination.exists():
+        # On retry the saved worktree may contain annex symlinks.
+        if fingerprint(destination, dataset / ".git/annex/objects") != expected:
+            raise DepotError(
+                "version_conflict", "Managed workspace content conflicts with this version."
+            )
+    else:
+        destination.parent.mkdir(exist_ok=True)
+        # A failed copy must not strand a partial version under its final name.
+        with TemporaryDirectory(prefix=".intake-", dir=dataset) as temporary:
+            incoming = Path(temporary) / "release"
+            shutil.copytree(staged, incoming)
+            if fingerprint(incoming) != expected:
+                raise DepotError("source_changed", "Staged content changed during publication.")
+            incoming.replace(destination)
+    command(
+        [
+            "datalad",
+            "save",
+            "-d",
+            str(dataset),
+            "-m",
+            f"Depot release {version}",
+            str(destination),
+        ],
+        cwd=dataset,
+    )
+    # Store the release's own commit, rather than a later dataset HEAD on retry.
+    commit = command(["git", "log", "-1", "--format=%H", "--", f"releases/{version}"], cwd=dataset)
+    if not commit:
+        raise DepotError("invalid_state", "No DataLad commit exists for the release.")
+    if on_saved:
+        on_saved(commit)
+    configured = command(["git", "remote"], cwd=dataset).splitlines()
+    if "goldmine" not in configured:
+        target.root.mkdir(parents=True, exist_ok=True)
+        command(
+            [
+                "datalad",
+                "create-sibling-ria",
+                "-d",
+                str(dataset),
+                "-s",
+                "goldmine",
+                "--alias",
+                dataset_id,
+                "--new-store-ok",
+                store_url,
+            ],
+            cwd=dataset,
+        )
+    else:
+        remote = command(["git", "remote", "get-url", "goldmine"], cwd=dataset)
+        if not Path(remote).resolve().is_relative_to(store):
+            raise DepotError(
+                "target_conflict", "Existing sibling belongs to a different publication target."
+            )
+    command(
+        ["datalad", "push", "-d", str(dataset), "--to", "goldmine", "--data", "anything"],
+        cwd=dataset,
+    )
+    with TemporaryDirectory(prefix="verify-", dir=config.staging) as temporary:
+        clone = Path(temporary) / "clone"
+        command(["datalad", "clone", clone_url, str(clone)])
+        command(["git", "checkout", "--detach", commit], cwd=clone)
+        # Explicitly choose the RIA storage sibling: publisher-local content cannot
+        # accidentally satisfy the verification boundary.
+        command(
+            [
+                "datalad",
+                "get",
+                "-d",
+                str(clone),
+                "--source",
+                "goldmine-storage",
+                str(clone / "releases" / version),
+            ],
+            cwd=clone,
+        )
+        retrieved = clone / "releases" / version
+        if fingerprint(retrieved, clone / ".git/annex/objects") != expected:
+            raise DepotError(
+                "verification_failed", "Fresh retrieval does not match the validated content."
+            )
+        validate_package(retrieved, manifest["checks"], clone / ".git/annex/objects")
+    return {"commit": commit, "target": str(store), "clone_url": clone_url, "verified": True}
+```
+
+:::
+
+::: {.manual-check}
+After editing this manual, emit source explicitly with `QUARTO_EMIT=1 quarto render`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
+:::

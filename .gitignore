@@ -10,6 +10,16 @@ wheels/
 .venv
 
 .spack-env
+/.quarto/
+**/*.quarto_ipynb
+docs/**
+!docs/.gitkeep
+/.depot/
+/depot.toml
+/datasets/*.qmd
+/data/
+/artifacts/
+/site_libs/
 *.log
 *.err
 

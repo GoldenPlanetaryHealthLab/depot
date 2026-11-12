@@ -1,0 +1,110 @@
+---
+title: "Command-line interface"
+filters:
+  - quarto-emit
+emit:
+  project_root: ..
+---
+
+Use depot --config CONFIG fetch ID VERSION, then validate and push with the same arguments. depot catalog build generates source pages; quarto render renders the website. depot sync processes every registered release candidate and rebuilds the catalogue. Inspect rejected attempts with depot receipts ID.
+
+::: {.manual-prereq}
+Use Python 3.14, the locked Python dependencies, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
+:::
+
+## Run manual and batch operations
+
+### `cli.py`
+
+::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/cli.py"}
+
+```python
+"""Small Rich/argparse interface over the release lifecycle."""
+
+import argparse
+import json
+import os
+from pathlib import Path
+
+from rich.console import Console
+from rich.table import Table
+
+from .catalog import build
+from .config import Config
+from .errors import DepotError
+from .service import Depot
+
+
+def parser() -> argparse.ArgumentParser:
+    result = argparse.ArgumentParser(
+        description="Validate and publish immutable Prospector releases."
+    )
+    result.add_argument(
+        "--config", type=Path, default=Path(os.environ.get("DEPOT_CONFIG", "depot.toml"))
+    )
+    result.add_argument(
+        "--json", action="store_true", help="Emit structured results without Rich formatting."
+    )
+    commands = result.add_subparsers(dest="command", required=True)
+    for name in ("fetch", "validate", "push"):
+        command = commands.add_parser(name)
+        command.add_argument("dataset_id")
+        command.add_argument("version")
+    commands.add_parser("sync")
+    catalogue = commands.add_parser("catalog")
+    catalogue.add_argument("action", choices=["build"])
+    receipts = commands.add_parser(
+        "receipts", help="Inspect internal attempt history, including rejected releases."
+    )
+    receipts.add_argument("dataset_id")
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parser().parse_args(argv)
+    progress = Console(stderr=True).status(f"Depot: {args.command} …")
+    if not args.json and args.command != "receipts":
+        progress.start()
+    try:
+        config = Config.load(args.config)
+        depot = Depot(config)
+        if args.command == "catalog":
+            results = build(config)
+        elif args.command == "receipts":
+            results = depot.receipts(args.dataset_id)
+        elif args.command == "sync":
+            results = depot.sync()
+            # Even when one dataset fails, catalogue prior and other successful releases.
+            build(config)
+        else:
+            results = [getattr(depot, args.command)(args.dataset_id, args.version)]
+        failed = (
+            any(row.get("status") == "failed" for row in results)
+            if args.command != "receipts"
+            else False
+        )
+    except DepotError as exc:
+        results = [{"status": "failed", "error": exc.as_dict()}]
+        failed = True
+    finally:
+        progress.stop()
+    if args.json or args.command == "receipts":
+        print(json.dumps(results, sort_keys=True, indent=2))
+    else:
+        table = Table("Dataset", "Version", "Status", "Detail")
+        for result in results:
+            table.add_row(
+                result.get("dataset_id", "—"),
+                result.get("version") or "—",
+                result.get("status", "—"),
+                (result.get("error") or {}).get("message", ""),
+            )
+        Console().print(table)
+    return 1 if failed else 0
+```
+
+:::
+
+::: {.manual-check}
+After editing this manual, emit source explicitly with `QUARTO_EMIT=1 quarto render`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
+:::

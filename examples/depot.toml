@@ -1,0 +1,16 @@
+# Copy outside the website repository and adjust the roots for your environment.
+schema_version = 1
+registry = "registry"
+website = "website"
+source_roots = ["prospectors"]
+state = "state"
+staging = "staging"
+workspace = "workspace"
+
+[targets.prospects]
+layer = "02_prospects"
+path = "goldmine/02_prospects"
+
+[targets.refined]
+layer = "03_refined"
+path = "goldmine/03_refined"

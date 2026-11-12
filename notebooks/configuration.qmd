@@ -1,0 +1,187 @@
+---
+title: "Registry and operational roots"
+filters:
+  - quarto-emit
+emit:
+  project_root: ..
+---
+
+Keep operational roots outside the website. Registry manifests contain standing publication policies. Destination layers and target names must agree with the independently configured allow-list. Refined policies require explicit UTC release dates.
+
+::: {.manual-prereq}
+Use Python 3.14, the locked Python dependencies, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
+:::
+
+## Check reviewed policy before intake
+
+### `config.py`
+
+::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/config.py"}
+
+```python
+"""Explicit operational roots and reviewed, versioned dataset policies."""
+
+from dataclasses import dataclass
+import hashlib
+from importlib.resources import files
+import json
+from pathlib import Path
+import re
+import tomllib
+
+from jsonschema import Draft202012Validator
+import yaml
+
+from .errors import DepotError
+
+IDENTIFIER = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*\Z")
+VERSION = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}\Z")
+
+
+def digest(value: object) -> str:
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def contained(path: Path, root: Path) -> Path:
+    resolved = path.resolve()
+    if not resolved.is_relative_to(root.resolve()):
+        raise DepotError("unsafe_path", "Path escapes its configured root.")
+    return resolved
+
+
+def identifier(value: str) -> str:
+    if not IDENTIFIER.fullmatch(value):
+        raise DepotError("invalid_id", "Dataset IDs must be lowercase hyphenated names.")
+    return value
+
+
+@dataclass(frozen=True)
+class Target:
+    layer: str
+    root: Path
+
+
+@dataclass(frozen=True)
+class Config:
+    registry: Path
+    website: Path
+    state: Path
+    staging: Path
+    workspace: Path
+    source_roots: tuple[Path, ...]
+    targets: dict[str, Target]
+
+    @classmethod
+    def load(cls, path: Path) -> Config:
+        try:
+            raw = tomllib.loads(path.read_text())
+            if raw["schema_version"] != 1:
+                raise ValueError("unsupported schema")
+            base = path.resolve().parent
+
+            def local(value: str) -> Path:
+                return (base / value).resolve()
+
+            config = cls(
+                registry=local(raw["registry"]),
+                website=local(raw["website"]),
+                state=local(raw["state"]),
+                staging=local(raw["staging"]),
+                workspace=local(raw["workspace"]),
+                source_roots=tuple(local(p) for p in raw["source_roots"]),
+                targets={
+                    name: Target(value["layer"], local(value["path"]))
+                    for name, value in raw["targets"].items()
+                },
+            )
+            config.check()
+            return config
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise DepotError(
+                "invalid_config", "Check the configuration file and required roots."
+            ) from exc
+
+    def check(self) -> None:
+        if not self.source_roots or not self.targets:
+            raise DepotError("invalid_config", "At least one source root and target are required.")
+        if any(t.layer not in {"02_prospects", "03_refined"} for t in self.targets.values()):
+            raise DepotError("invalid_config", "Only Prospects and Refined targets are supported.")
+        # No intake, history, or publication storage can be served as part of the site.
+        operational = [self.state, self.staging, self.workspace]
+        operational.extend(t.root for t in self.targets.values())
+        roots = operational + list(self.source_roots) + [self.website]
+        for index, root in enumerate(roots):
+            for other in roots[index + 1 :]:
+                if root.is_relative_to(other) or other.is_relative_to(root):
+                    raise DepotError(
+                        "overlapping_roots",
+                        "Source, state, staging, workspace, targets, and website roots must be disjoint.",
+                    )
+
+    def dataset_path(self, root: Path, dataset_id: str, *parts: str) -> Path:
+        return contained(root / identifier(dataset_id) / Path(*parts), root)
+
+
+def load_manifest(config: Config, dataset_id: str) -> dict:
+    identifier(dataset_id)
+    path = contained(config.registry / f"{dataset_id}.yaml", config.registry)
+    try:
+        manifest = yaml.safe_load(path.read_text())
+    except (OSError, yaml.YAMLError) as exc:
+        raise DepotError("invalid_registry", "Cannot read dataset registry YAML.") from exc
+    schema = json.loads(files("depot").joinpath("schemas/registry-v1.schema.json").read_text())
+    errors = list(Draft202012Validator(schema).iter_errors(manifest))
+    if errors:
+        raise DepotError(
+            "invalid_registry",
+            "Registry entry does not match schema version 1.",
+            {"fields": sorted({".".join(map(str, e.absolute_path)) for e in errors})},
+        )
+    if manifest["id"] != dataset_id:
+        raise DepotError("invalid_registry", "Manifest ID must match its filename.")
+    destination = manifest["destination"]
+    target = config.targets.get(destination["target"])
+    if not target or target.layer != destination["layer"]:
+        raise DepotError(
+            "unauthorized_destination",
+            "Destination target and layer are not allow-listed together.",
+        )
+    source = Path(manifest["source"]["releases"])
+    if not source.is_absolute():
+        source = config.registry / source
+    source = source.resolve()
+    if not any(source.is_relative_to(root) for root in config.source_roots):
+        raise DepotError("unsafe_path", "Source releases must be within an allowed source root.")
+    try:
+        re.compile(manifest["versions"]["pattern"])
+    except re.error as exc:
+        raise DepotError("invalid_registry", "Invalid version naming expression.") from exc
+    if target.layer == "03_refined" and not manifest["policy"].get("approved_dates"):
+        raise DepotError("invalid_registry", "Refined policy requires approved UTC release dates.")
+    # Keep the resolved source internal. Public rendering uses a separate field allow-list.
+    manifest["source"]["releases"] = str(source)
+    return manifest
+
+
+def check_version(manifest: dict, version: str) -> str:
+    if not VERSION.fullmatch(version) or not re.fullmatch(
+        manifest["versions"]["pattern"], version
+    ):
+        raise DepotError(
+            "invalid_version", "Version does not match the allowed naming convention."
+        )
+    return version
+
+
+def binding(config: Config, manifest: dict) -> str:
+    target = config.targets[manifest["destination"]["target"]]
+    return digest({"manifest": manifest, "target": str(target.root)})
+```
+
+:::
+
+::: {.manual-check}
+After editing this manual, emit source explicitly with `QUARTO_EMIT=1 quarto render`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
+:::

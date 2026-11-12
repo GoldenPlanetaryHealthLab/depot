@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Proposed FASRC job only. Review partition, account, memory, time, and log paths.
+#SBATCH --job-name=depot-sync
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=4G
+#SBATCH --time=01:00:00
+#SBATCH --output=depot-%j.out
+#SBATCH --error=depot-%j.err
+set -euo pipefail
+: "${DEPOT_PROJECT:?Set the Depot checkout path}"
+: "${DEPOT_CONFIG:?Set the internal configuration path}"
+cd "$DEPOT_PROJECT"
+sync_status=0
+"$DEPOT_PROJECT/.venv/bin/depot" --config "$DEPOT_CONFIG" sync || sync_status=$?
+quarto render
+exit "$sync_status"

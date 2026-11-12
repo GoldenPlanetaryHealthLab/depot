@@ -1,0 +1,21 @@
+schema_version: 1
+id: example
+title: Synthetic example
+description: Small synthetic observations for demonstrating publication.
+source:
+  prospector: fixture-prospector
+  releases: ../prospectors/example/data/outputs/releases
+destination:
+  layer: 02_prospects
+  target: prospects
+versions:
+  pattern: 'v[0-9]+'
+policy:
+  mode: automatic
+checks:
+  required_fields: [name, title, description]
+  nonempty: true
+  minimum_rows: 1
+catalogue:
+  visible: true
+  audience: Lab developers testing the release workflow; synthetic data only.

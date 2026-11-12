@@ -1,0 +1,180 @@
+---
+title: "Release validation"
+filters:
+  - quarto-emit
+emit:
+  project_root: ..
+---
+
+A release fingerprint hashes sorted relative paths, sizes, and file contents. Source and staging accept ordinary local files only. Fresh clones additionally permit git-annex links into their own object store. Frictionless checks both metadata and resource contents; schemas must be inline.
+
+::: {.manual-prereq}
+Use Python 3.14, the locked Python dependencies, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
+:::
+
+## Validate the exact publication candidate
+
+### `validation.py`
+
+::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/validation.py"}
+
+```python
+"""Local-only Frictionless validation and reproducible release fingerprints."""
+
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import stat
+
+from frictionless import Package
+
+from .config import digest
+from .errors import DepotError
+
+RESERVED = {".git", ".datalad", ".gitmodules", ".gitattributes"}
+
+
+def release_files(root: Path, annex_root: Path | None = None) -> list[Path]:
+    if root.is_symlink() or not root.is_dir():
+        raise DepotError("unsafe_release", "Release must be an ordinary directory.")
+    paths = []
+    for directory, dirs, names in os.walk(root, followlinks=False):
+        for name in dirs + names:
+            path = Path(directory) / name
+            if name in RESERVED or name.endswith((".part", ".partial", ".tmp")):
+                raise DepotError(
+                    "incomplete_release", "Release contains reserved or unfinished files."
+                )
+            mode = path.lstat().st_mode
+            if stat.S_ISLNK(mode):
+                # Only a fresh DataLad clone can use annex links, never source or staging.
+                if annex_root is None or not path.resolve().is_relative_to(annex_root.resolve()):
+                    raise DepotError("unsafe_path", "Release contains an unauthorized symlink.")
+                if not path.is_file():
+                    raise DepotError("missing_resource", "Annexed content has not been retrieved.")
+            elif not stat.S_ISREG(mode) and not stat.S_ISDIR(mode):
+                raise DepotError("unsafe_path", "Release contains a non-regular file.")
+        paths.extend(Path(directory) / name for name in names)
+    return sorted(paths, key=lambda path: path.relative_to(root).as_posix())
+
+
+def fingerprint(root: Path, annex_root: Path | None = None) -> str:
+    entries = []
+    for path in release_files(root, annex_root):
+        before = path.stat()
+        checksum = hashlib.sha256()
+        with path.open("rb") as stream:
+            for block in iter(lambda: stream.read(1024 * 1024), b""):
+                checksum.update(block)
+        after = path.stat()
+        if (before.st_size, before.st_mtime_ns, before.st_ino) != (
+            after.st_size,
+            after.st_mtime_ns,
+            after.st_ino,
+        ):
+            raise DepotError("source_changed", "A release file changed while being fingerprinted.")
+        entries.append([path.relative_to(root).as_posix(), after.st_size, checksum.hexdigest()])
+    return digest(entries)
+
+
+def local_resource(root: Path, value: object, annex_root: Path | None) -> Path:
+    if not isinstance(value, str) or not value or "\\" in value or ":" in value:
+        raise DepotError("unsafe_resource", "Only relative local resource paths are supported.")
+    relative = PurePosixPath(value)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise DepotError("unsafe_resource", "Resource path escapes the release.")
+    path = root.joinpath(*relative.parts)
+    resolved = path.resolve()
+    if not resolved.is_relative_to(root.resolve()) and (
+        annex_root is None or not resolved.is_relative_to(annex_root.resolve())
+    ):
+        raise DepotError("unsafe_resource", "Resource path escapes the release.")
+    if not path.is_file():
+        raise DepotError("missing_resource", "A declared local resource is missing.")
+    return path
+
+
+def validate_package(root: Path, checks: dict, annex_root: Path | None = None) -> dict:
+    release_files(root, annex_root)
+    try:
+        descriptor = json.loads((root / "datapackage.json").read_text())
+    except (OSError, ValueError) as exc:
+        raise DepotError("invalid_package", "Cannot read datapackage.json as JSON.") from exc
+    if not isinstance(descriptor, dict):
+        raise DepotError("invalid_package", "Package metadata must be an object.")
+    for field in checks["required_fields"]:
+        if descriptor.get(field) in (None, "", [], {}):
+            raise DepotError(
+                "missing_metadata", "Required package metadata is missing.", {"field": field}
+            )
+    resources = descriptor.get("resources")
+    if not isinstance(resources, list) or not resources:
+        raise DepotError("invalid_package", "At least one local resource is required.")
+    summary = []
+    for resource in resources:
+        if not isinstance(resource, dict):
+            raise DepotError("invalid_package", "Each resource must be an object.")
+        # Never let descriptor references trigger network reads or local schema escapes.
+        for field in ("schema", "dialect", "control"):
+            if field in resource and not isinstance(resource[field], dict):
+                raise DepotError(
+                    "unsafe_resource",
+                    "Resource schemas, dialects, and controls must be inline objects.",
+                )
+        if resource.get("scheme", "file") != "file" or "data" in resource:
+            raise DepotError(
+                "unsafe_resource", "Resources must declare local files, not remote or inline data."
+            )
+        paths = resource.get("path")
+        paths = paths if isinstance(paths, list) else [paths]
+        if not paths:
+            raise DepotError("invalid_package", "Each resource must declare at least one path.")
+        size = 0
+        for value in paths:
+            path = local_resource(root, value, annex_root)
+            if checks["nonempty"] and path.stat().st_size == 0:
+                raise DepotError("empty_resource", "A declared resource is empty.")
+            size += path.stat().st_size
+        summary.append(
+            {"name": resource.get("name", "resource"), "files": len(paths), "bytes": size}
+        )
+    if "profile" in descriptor and descriptor["profile"] not in {
+        "data-package",
+        "tabular-data-package",
+    }:
+        raise DepotError("unsafe_resource", "Only built-in package profiles are supported.")
+    try:
+        metadata = Package.validate_descriptor(descriptor, basepath=str(root))
+        if not metadata.valid:
+            raise DepotError("invalid_package", "Frictionless rejected the package descriptor.")
+        package = Package.from_descriptor(descriptor, basepath=str(root))
+        report = package.validate()
+        if not report.valid:
+            result = report.to_descriptor()
+            errors = list(result.get("errors", []))
+            for task in result.get("tasks", []):
+                errors.extend(task.get("errors", []))
+            raise DepotError(
+                "invalid_package",
+                "Frictionless validation failed.",
+                {"error_types": sorted({error["type"] for error in errors})},
+            )
+        minimum = checks.get("minimum_rows", 0)
+        for task in report.to_descriptor().get("tasks", []):
+            if minimum and task.get("stats", {}).get("rows", 0) < minimum:
+                raise DepotError("insufficient_rows", "Resource has fewer rows than required.")
+    except DepotError:
+        raise
+    except Exception as exc:
+        raise DepotError(
+            "invalid_package", "Frictionless could not validate this package."
+        ) from exc
+    return {"valid": True, "resources": summary, "package_name": descriptor.get("name", "")}
+```
+
+:::
+
+::: {.manual-check}
+After editing this manual, emit source explicitly with `QUARTO_EMIT=1 quarto render`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
+:::

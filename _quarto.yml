@@ -1,5 +1,25 @@
 project:
-  title: "depot"
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - datasets/*.qmd
+    - notebooks/*.qmd
 
+website:
+  title: Depot
+  navbar:
+    left:
+      - href: index.qmd
+        text: Datasets
+      - href: notebooks/implementation.qmd
+        text: Operator manual
 
+format:
+  html:
+    theme: cosmo
+    toc: true
+
+execute:
+  enabled: false
 

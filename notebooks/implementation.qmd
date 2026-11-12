@@ -1,0 +1,125 @@
+---
+title: "Depot operator manual"
+filters:
+  - quarto-emit
+emit:
+  project_root: ..
+---
+
+Use the manual fetch, validate, and push commands in order. A publication is eligible for the catalogue only after a new clone retrieves and validates its bytes. Files below are emitted with the upstream quarto-emit extension; no analytical code runs during rendering.
+
+::: {.manual-prereq}
+Use Python 3.14, the locked Python dependencies, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
+:::
+
+## Publication evidence and recovery
+
+### `__init__.py`
+
+::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/__init__.py"}
+
+```python
+"""Depot: verified dataset publication and a receipt-driven catalogue."""
+```
+
+:::
+
+### `errors.py`
+
+::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/errors.py"}
+
+```python
+"""Structured errors safe to display without subprocess output or credentials."""
+
+
+class DepotError(Exception):
+    def __init__(self, code: str, message: str, details: dict | None = None):
+        super().__init__(message)
+        self.code = code
+        self.details = details or {}
+
+    def as_dict(self) -> dict:
+        return {"code": self.code, "message": str(self), "details": self.details}
+```
+
+:::
+
+### `storage.py`
+
+::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/storage.py"}
+
+```python
+"""Atomic local records and nonblocking Linux per-dataset locks."""
+
+from contextlib import contextmanager
+import fcntl
+import json
+import os
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+
+from .errors import DepotError
+
+
+def read_json(path: Path) -> dict | None:
+    try:
+        return json.loads(path.read_text())
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError) as exc:
+        raise DepotError(
+            "invalid_state", "An operational record is unreadable; inspect internal state."
+        ) from exc
+
+
+def write_json(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as stream:
+        temporary = Path(stream.name)
+        try:
+            json.dump(value, stream, sort_keys=True, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        except BaseException:
+            temporary.unlink(missing_ok=True)
+            raise
+    try:
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+@contextmanager
+def dataset_lock(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a") as stream:
+        try:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise DepotError(
+                "dataset_locked", "Another operation holds this dataset's lock; retry later."
+            ) from exc
+        try:
+            yield
+        finally:
+            fcntl.flock(stream, fcntl.LOCK_UN)
+```
+
+:::
+
+### `__main__.py`
+
+::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/__main__.py"}
+
+```python
+from .cli import main
+
+raise SystemExit(main())
+```
+
+:::
+
+::: {.manual-check}
+After editing this manual, emit source explicitly with `QUARTO_EMIT=1 quarto render`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
+:::
