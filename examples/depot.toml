@@ -1,7 +1,9 @@
-# Copy outside the website repository and adjust the roots for your environment.
+# Starting point: adjust every root before use; relative paths resolve from this file.
+# Keep this file private; notebooks/_quarto.yml renders the catalogue and Manual to docs/.
+# The demo has prospectors/ here; a checkout with sibling Prospectors uses ../prospectors.
 schema_version = 1
 registry = "registry"
-website = "website"
+website = "notebooks"
 source_roots = ["prospectors"]
 state = "state"
 staging = "staging"
@@ -10,7 +12,9 @@ workspace = "workspace"
 [targets.prospects]
 layer = "02_prospects"
 path = "goldmine/02_prospects"
+access = "unlocked" # Default; "locked" publishes only the DataLad archive.
 
 [targets.refined]
 layer = "03_refined"
 path = "goldmine/03_refined"
+access = "unlocked"

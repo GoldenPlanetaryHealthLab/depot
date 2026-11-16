@@ -1,0 +1,94 @@
+---
+title: "Operate Depot"
+subtitle: "From an immutable Prospector release to a verified data catalogue"
+engine: markdown
+---
+
+Depot consumes completed Prospector releases, validates and publishes them with
+DataLad, and generates a data catalogue from verified publication receipts.
+By default, verified releases are also available as ordinary writable files at
+`GOLDMINE/LAYER/ID.data/releases/VERSION/`; lab members can use them without
+DataLad. The RIA archive retains versioned history. This Manual explains the
+workflow and emits the `depot` Python library.
+
+The site uses the shared Quarto Manuals format under `notebooks/`, an
+`authoring` profile for reading,
+an explicit `emit` profile for synchronizing generated files, and isolated
+rendering. The emitted application is a Python library rather than an R targets
+pipeline. Neither profile executes data processing or publication.
+
+## Set up Depot {#setup}
+
+Run from the repository root with the installed Spack environment available:
+
+```sh
+spack env activate -d .
+export UV_PYTHON="$PWD/.spack-env/view/bin/python"
+uv sync --locked
+```
+
+Git with an author identity, DataLad, git-annex, and Quarto 1.9+ must be on `PATH`.
+Select a reviewed `depot.toml` with registry, source, state, staging, workspace,
+public site sources, and approved publication roots. Relative configuration paths resolve
+from that file's directory. Operational and website roots must be disjoint.
+
+For this checkout's configuration:
+
+```sh
+export DEPOT_CONFIG="$PWD/depot.toml"
+```
+
+Set `website = "notebooks"` in the configuration. The existing
+`notebooks/_quarto.yml` controls the catalogue and Manual together and renders
+both to `docs/`. The root README supplies the complete configuration examples. See [configuration](configuration.qmd) for the validated contract.
+
+## Add data to the catalogue {#add-data}
+
+Start with a completed release containing `VERSION/datapackage.json` and every
+declared local resource. Add a reviewed `registry/ID.yaml` entry pointing to the
+directory containing the release versions, with a matching approved target and
+`catalogue.visible: true`. Relative source paths resolve from the registry
+directory. Registry entries do not fetch or publish data themselves.
+
+For `kiribati-biomarkers` version `v0.2.2`, run each command only after the
+previous command succeeds, using the same configuration throughout:
+
+```sh
+uv run --locked depot --config "$DEPOT_CONFIG" fetch kiribati-biomarkers v0.2.2
+uv run --locked depot --config "$DEPOT_CONFIG" validate kiribati-biomarkers v0.2.2
+uv run --locked depot --config "$DEPOT_CONFIG" push kiribati-biomarkers v0.2.2
+uv run --locked depot --config "$DEPOT_CONFIG" catalog build
+scripts/render-isolated --profile authoring
+```
+
+Expect `fetched`, `validated`, `success`, and `catalogued`. Validation requires
+an existing fetched snapshot. Publication is successful only after a fresh
+clone retrieves and validates the published release. Open the rendered
+catalogue at `docs/index.html`. Supporting pages explain how to operate Depot.
+
+The [operator guide](implementation.qmd#quickstart) explains the sequence;
+the [catalogue guide](catalogue.qmd) shows the pandas DataFrames and Great Tables
+used to present verified releases. There is no page template engine or separate
+list of catalogue entries to maintain. `sync` automates the pipeline for every
+registered dataset; use the individual commands for one selected release.
+
+## Read or maintain the Manual
+
+| Task | Start here |
+|---|---|
+| Understand the command sequence and failures | [Operate Depot](implementation.qmd) and [command line](command-line.qmd) |
+| Review installation and registry policy | [Configuration](configuration.qmd) |
+| Inspect catalogue data and tables | [Build the catalogue](catalogue.qmd) |
+| Inspect generated Python behavior | [Lifecycle](lifecycle.qmd), [validation](validation.qmd), and [publication](publication.qmd) |
+| Render documentation or emit Python changes | [Manual maintenance](rendering.qmd) |
+
+From the repository root:
+
+```sh
+scripts/render-isolated --profile authoring
+scripts/render-isolated --profile emit
+```
+
+Open `docs/index.html` to browse datasets and `docs/overview.html` for this
+operator guide. All site sources live under `notebooks/`; emitted Python lives
+in `src/depot`. One render produces the catalogue and its operating Manual.

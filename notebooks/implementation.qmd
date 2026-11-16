@@ -1,22 +1,57 @@
 ---
 title: "Depot operator manual"
-filters:
-  - quarto-emit
-emit:
-  project_root: ..
 ---
 
-Use the manual fetch, validate, and push commands in order. A publication is eligible for the catalogue only after a new clone retrieves and validates its bytes. Files below are emitted with the upstream quarto-emit extension; no analytical code runs during rendering.
+Depot consumes completed Prospector releases, publishes validated versions through
+DataLad, and generates a Quarto catalogue from verified publication receipts.
+Start with the [README walkthrough](overview.qmd#add-data) for setup, registration,
+and the complete real-data workflow. This manual documents the implementation;
+its code blocks emit the Python modules and do not execute ingestion.
 
 ::: {.manual-prereq}
-Use Python 3.14, the locked Python dependencies, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
+Use Spack-managed Python 3.14, Python packages locked by uv, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
 :::
+
+## Quickstart
+
+Complete [software and configuration setup](overview.qmd#setup) first. The
+Prospector must already provide `VERSION/datapackage.json` and local resources;
+the selected registry must contain a reviewed entry for the dataset. Keep the
+same configuration for every step. For Kiribati, run from the Depot checkout:
+
+```bash
+export DEPOT_CONFIG="$PWD/depot.toml"
+uv run --locked depot --config "$DEPOT_CONFIG" fetch kiribati-biomarkers v0.2.2
+uv run --locked depot --config "$DEPOT_CONFIG" validate kiribati-biomarkers v0.2.2
+uv run --locked depot --config "$DEPOT_CONFIG" push kiribati-biomarkers v0.2.2
+uv run --locked depot --config "$DEPOT_CONFIG" catalog build
+scripts/render-isolated --profile authoring
+```
+
+Point the configuration's `website` setting to this checkout's `notebooks/`
+directory; substitute another dataset ID and version as needed. **Fetch must succeed before
+validate; validate must succeed before push.** Expect `fetched`, `validated`,
+`success`, and `catalogued` in that order. Push records success only after a fresh
+clone retrieves and validates the published bytes. Inspect failures with
+`uv run --locked depot --config "$DEPOT_CONFIG" receipts kiribati-biomarkers`.
+
+The catalogue and Manual share `notebooks/_quarto.yml` and one output directory,
+`docs/`. Open `docs/index.html` to browse datasets and `docs/overview.html` for
+operating instructions. `catalog build` updates the landing page and generated
+dataset pages without changing authored Manual chapters.
+
+For subsequent runs, `uv run --locked depot --config "$DEPOT_CONFIG" sync`
+performs fetch, validate, push, and catalogue generation for **every registered
+dataset and discovered version**. It has no dataset selector. Use the individual
+commands to test a small dataset while another dataset is running. Render the
+unified site afterward. If publication is already verified, start at
+`catalog build`; see the [catalogue guide](catalogue.qmd#quickstart).
 
 ## Publication evidence and recovery
 
 ### `__init__.py`
 
-::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/__init__.py"}
+::: {.manual-procedure .emit-source-py file="{{ emit.project_root }}/src/depot/__init__.py"}
 
 ```python
 """Depot: verified dataset publication and a receipt-driven catalogue."""
@@ -26,7 +61,7 @@ Use Python 3.14, the locked Python dependencies, DataLad, git-annex, Git, and Qu
 
 ### `errors.py`
 
-::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/errors.py"}
+::: {.manual-procedure .emit-source-py file="{{ emit.project_root }}/src/depot/errors.py"}
 
 ```python
 """Structured errors safe to display without subprocess output or credentials."""
@@ -44,9 +79,40 @@ class DepotError(Exception):
 
 :::
 
+### `progress.py`
+
+Progress callbacks report work without coupling the lifecycle to a terminal.
+Only the CLI renders these events with Rich; library callers remain silent by default.
+
+::: {.manual-procedure .emit-source-py file="{{ emit.project_root }}/src/depot/progress.py"}
+
+```python
+"""Progress events shared by the lifecycle and its user interfaces."""
+
+from collections.abc import Callable
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class ProgressUpdate:
+    message: str
+    completed: int | None = None
+    total: int | None = None
+    unit: str = ""
+
+
+ProgressCallback = Callable[[ProgressUpdate], None]
+
+
+def quiet(update: ProgressUpdate) -> None:
+    """Leave library calls silent unless a caller supplies a progress callback."""
+```
+
+:::
+
 ### `storage.py`
 
-::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/storage.py"}
+::: {.manual-procedure .emit-source-py file="{{ emit.project_root }}/src/depot/storage.py"}
 
 ```python
 """Atomic local records and nonblocking Linux per-dataset locks."""
@@ -110,7 +176,7 @@ def dataset_lock(path: Path):
 
 ### `__main__.py`
 
-::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/__main__.py"}
+::: {.manual-procedure .emit-source-py file="{{ emit.project_root }}/src/depot/__main__.py"}
 
 ```python
 from .cli import main
@@ -121,5 +187,5 @@ raise SystemExit(main())
 :::
 
 ::: {.manual-check}
-After editing this manual, emit source explicitly with `QUARTO_EMIT=1 quarto render`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
+After editing this manual, emit source explicitly with `scripts/render-isolated --profile emit`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
 :::

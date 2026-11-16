@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 from depot import publication
-from depot.catalog import build
+from depot.catalog import build, catalogue_data, catalogue_table
 from depot.cli import main
 from depot.config import Config, Target, load_manifest
 from depot.errors import DepotError
@@ -22,7 +22,7 @@ def edit_manifest(config, dataset_id="example", **changes):
     path.write_text(yaml.safe_dump(manifest))
 
 
-def fake_publish(config, manifest, version, staged, expected, on_saved=None):
+def fake_publish(config, manifest, version, staged, expected, on_saved=None, on_progress=None):
     if on_saved:
         on_saved("a" * 40)
     return {
@@ -30,6 +30,7 @@ def fake_publish(config, manifest, version, staged, expected, on_saved=None):
         "target": str(config.targets["prospects"].root / manifest["id"]),
         "clone_url": "ria+file:///private/test-store#~" + manifest["id"],
         "verified": True,
+        "access": publication.materialize(config, manifest, version, staged, expected),
     }
 
 
@@ -290,6 +291,57 @@ def test_catalogue_uses_verified_layer_not_current_target_label(config, register
     from depot.catalog import public_entries
 
     assert public_entries(changed)[0]["layer"] == "02_prospects"
+
+
+def test_catalogue_dataframe_projects_latest_verified_data(config, register, monkeypatch):
+    register()
+    monkeypatch.setattr(publication, "publish", fake_publish)
+    depot = Depot(config)
+    depot.sync()
+    register(version="v10")
+    register(version="v2")
+    depot.sync()
+    register(version="v11", bad=True)
+    depot.sync()
+    data = catalogue_data(config)
+    assert data["id"].tolist() == ["example"]
+    assert data["version"].tolist() == ["v10"]
+    assert data["layer"].tolist() == ["02_prospects"]
+    assert data["resources"][0] == [{"name": "observations", "files": 1, "bytes": 14}]
+    assert not any("target" in column or "clone_url" in column for column in data.columns)
+    assert "private/test-store" not in data.to_json()
+
+
+def test_catalogue_empty_dataframe_and_great_table(config):
+    data = catalogue_data(config)
+    assert data.empty
+    assert {"id", "version", "resources", "published"} <= set(data.columns)
+    assert 'id="depot-catalogue"' in catalogue_table(data).as_raw_html()
+    assert build(config) == []
+    assert "No verified datasets are available yet." in (config.website / "index.qmd").read_text()
+
+
+def test_great_tables_keep_metadata_literal(config, register, monkeypatch):
+    register()
+    title = '<script>alert("x")</script> {{< include /private/file >}}'
+    edit_manifest(config, title=title, description="[download](javascript:alert(1)) **literal**")
+    monkeypatch.setattr(publication, "publish", fake_publish)
+    Depot(config).sync()
+    build(config)
+    index = (config.website / "index.qmd").read_text()
+    detail = (config.website / "datasets/example.qmd").read_text()
+    assert 'id="depot-catalogue"' in index
+    assert 'href="datasets/example.html"' in index
+    assert 'id="depot-resources-example"' in detail
+    for page in [index, detail]:
+        assert "<script>" not in page and "{{<" not in page
+        assert "&lt;script&gt;" in page
+        assert "private/test-store" not in page
+    assert 'href="javascript:' not in detail
+    assert "<strong>literal</strong>" not in detail
+    assert "**literal**" in detail
+    build(config)
+    assert (config.website / "datasets/example.qmd").read_text() == detail
 
 
 def test_refined_schedule(config, register, monkeypatch):

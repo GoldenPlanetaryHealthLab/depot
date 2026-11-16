@@ -25,6 +25,7 @@ module purge
 
 source /n/home03/ttapera/software/spack/share/spack/setup-env.sh
 spack env activate -d "$PROJECT_DIR"
+export UV_PYTHON="$PROJECT_DIR/.spack-env/view/bin/python"
 
 #which R
 #which Rscript

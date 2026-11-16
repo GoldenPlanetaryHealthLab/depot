@@ -10,8 +10,9 @@ import shutil
 import subprocess
 from tempfile import TemporaryDirectory
 
-from .config import Config, contained
+from .config import Config, access_mode, contained
 from .errors import DepotError
+from .progress import ProgressCallback, ProgressUpdate, quiet
 from .validation import fingerprint, validate_package
 
 
@@ -32,6 +33,61 @@ def command(args: list[str], cwd: Path | None = None) -> str:
         ) from exc
 
 
+def materialize(
+    config: Config,
+    manifest: dict,
+    version: str,
+    verified: Path,
+    expected: str,
+    *,
+    on_progress: ProgressCallback = quiet,
+) -> dict:
+    """Expose verified bytes as independent ordinary files; never overwrite edits."""
+    mode = access_mode(config, manifest)
+    if mode == "locked":
+        return {"mode": mode, "populated": False}
+    target = config.targets[manifest["destination"]["target"]]
+    relative = Path(manifest["id"] + ".data") / "releases" / version
+    destination = target.root / relative
+    # Reject redirected views even when a symlink stays within the target root.
+    for path in (destination, *destination.parents):
+        if path == target.root:
+            break
+        if path.is_symlink():
+            raise DepotError(
+                "unsafe_path", "The ordinary-file view cannot contain directory symlinks."
+            )
+    destination = contained(destination, target.root)
+    on_progress(ProgressUpdate("Preparing populated, unlocked Goldmine files"))
+    if destination.exists():
+        if fingerprint(destination, on_progress=on_progress) != expected:
+            raise DepotError(
+                "access_conflict",
+                "Goldmine ordinary files have changed; preserve edits and restore or relocate the view before retrying.",
+            )
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(prefix=".populate-", dir=destination.parent) as temporary:
+            incoming = Path(temporary) / "release"
+            # Follow only the annex links already checked by retrieval verification.
+            # copyfile creates independent bytes, without inheriting annex read-only modes.
+            shutil.copytree(verified, incoming, copy_function=shutil.copyfile)
+            if fingerprint(incoming, on_progress=on_progress) != expected:
+                raise DepotError(
+                    "verification_failed", "Populated files differ from verified content."
+                )
+            incoming.replace(destination)
+    for path in destination.rglob("*"):
+        if path.is_file():
+            path.chmod(path.stat().st_mode | 0o200)
+    return {
+        "mode": mode,
+        "populated": True,
+        "path": str(destination),
+        "relative_path": relative.as_posix(),
+    }
+
+
 def publish(
     config: Config,
     manifest: dict,
@@ -39,7 +95,9 @@ def publish(
     staged: Path,
     expected: str,
     on_saved: Callable[[str], None] | None = None,
+    on_progress: ProgressCallback = quiet,
 ) -> dict:
+    on_progress(ProgressUpdate("Preparing DataLad publication workspace"))
     dataset_id = manifest["id"]
     dataset = config.dataset_path(config.workspace, dataset_id)
     target = config.targets[manifest["destination"]["target"]]
@@ -49,10 +107,22 @@ def publish(
     config.workspace.mkdir(parents=True, exist_ok=True)
     if not (dataset / ".datalad/config").is_file():
         command(["datalad", "create", "-d", str(dataset), "-D", f"Depot dataset {dataset_id}"])
+    command(
+        [
+            "git",
+            "config",
+            "annex.addunlocked",
+            str(access_mode(config, manifest) == "unlocked").lower(),
+        ],
+        cwd=dataset,
+    )
     destination = contained(dataset / "releases" / version, dataset)
     if destination.exists():
         # On retry the saved worktree may contain annex symlinks.
-        if fingerprint(destination, dataset / ".git/annex/objects") != expected:
+        if (
+            fingerprint(destination, dataset / ".git/annex/objects", on_progress=on_progress)
+            != expected
+        ):
             raise DepotError(
                 "version_conflict", "Managed workspace content conflicts with this version."
             )
@@ -61,10 +131,12 @@ def publish(
         # A failed copy must not strand a partial version under its final name.
         with TemporaryDirectory(prefix=".intake-", dir=dataset) as temporary:
             incoming = Path(temporary) / "release"
+            on_progress(ProgressUpdate("Copying validated release into DataLad workspace"))
             shutil.copytree(staged, incoming)
-            if fingerprint(incoming) != expected:
+            if fingerprint(incoming, on_progress=on_progress) != expected:
                 raise DepotError("source_changed", "Staged content changed during publication.")
             incoming.replace(destination)
+    on_progress(ProgressUpdate("Saving release with DataLad"))
     command(
         [
             "datalad",
@@ -85,6 +157,7 @@ def publish(
         on_saved(commit)
     configured = command(["git", "remote"], cwd=dataset).splitlines()
     if "goldmine" not in configured:
+        on_progress(ProgressUpdate("Creating publication storage sibling"))
         target.root.mkdir(parents=True, exist_ok=True)
         command(
             [
@@ -107,16 +180,19 @@ def publish(
             raise DepotError(
                 "target_conflict", "Existing sibling belongs to a different publication target."
             )
+    on_progress(ProgressUpdate("Pushing release to publication storage"))
     command(
         ["datalad", "push", "-d", str(dataset), "--to", "goldmine", "--data", "anything"],
         cwd=dataset,
     )
     with TemporaryDirectory(prefix="verify-", dir=config.staging) as temporary:
+        on_progress(ProgressUpdate("Cloning published dataset for retrieval verification"))
         clone = Path(temporary) / "clone"
         command(["datalad", "clone", clone_url, str(clone)])
         command(["git", "checkout", "--detach", commit], cwd=clone)
         # Explicitly choose the RIA storage sibling: publisher-local content cannot
         # accidentally satisfy the verification boundary.
+        on_progress(ProgressUpdate("Retrieving published release from storage"))
         command(
             [
                 "datalad",
@@ -130,9 +206,26 @@ def publish(
             cwd=clone,
         )
         retrieved = clone / "releases" / version
-        if fingerprint(retrieved, clone / ".git/annex/objects") != expected:
+        on_progress(ProgressUpdate("Verifying retrieved release fingerprint"))
+        if (
+            fingerprint(retrieved, clone / ".git/annex/objects", on_progress=on_progress)
+            != expected
+        ):
             raise DepotError(
                 "verification_failed", "Fresh retrieval does not match the validated content."
             )
-        validate_package(retrieved, manifest["checks"], clone / ".git/annex/objects")
-    return {"commit": commit, "target": str(store), "clone_url": clone_url, "verified": True}
+        on_progress(ProgressUpdate("Validating retrieved release"))
+        validate_package(
+            retrieved, manifest["checks"], clone / ".git/annex/objects", on_progress=on_progress
+        )
+        access = materialize(
+            config, manifest, version, retrieved, expected, on_progress=on_progress
+        )
+    on_progress(ProgressUpdate("Publication and fresh retrieval verified"))
+    return {
+        "commit": commit,
+        "target": str(store),
+        "clone_url": clone_url,
+        "verified": True,
+        "access": access,
+    }

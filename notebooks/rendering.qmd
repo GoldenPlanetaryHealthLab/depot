@@ -1,0 +1,132 @@
+---
+title: "Render and emit the Manual"
+engine: markdown
+---
+
+The Manual follows the same authoring and emit profiles as the Madagascar
+Healthshed Clinic Data Manual. Its emitted application is the `depot` Python
+library in `src/depot`, together with this render helper. Catalogue metadata
+and resource records are pandas DataFrames rendered directly with Great Tables.
+Neither profile executes the library or opens released data.
+
+::: {.manual-prereq}
+
+Run from the repository root with Bash, rsync, Python 3, and Quarto 1.9+ on
+`PATH`. All Quarto source, profiles, extensions, and project caches live in
+`notebooks/`. The same project renders the catalogue landing page, generated
+dataset pages, and operating Manual into `docs/`. Run one publishing render
+per checkout at a time because promotion replaces the rendered `docs/` tree.
+
+:::
+
+## Render documentation or synchronize generated files
+
+::: {.manual-procedure}
+
+```sh
+scripts/render-isolated --profile authoring
+scripts/render-isolated --profile emit
+```
+
+Run `depot --config CONFIG catalog build` before rendering to refresh public
+metadata from verified receipts. Rendering itself uses that saved snapshot and
+does not open private operational state. `notebooks/index.qmd` and the generated
+`datasets/` pages belong to catalogue generation; authored Manual pages such as
+`overview.qmd` are preserved.
+
+The default `authoring` profile renders the site and sets `QUARTO_EMIT=0`.
+The helper clears any inherited `QUARTO_EMIT` before Quarto loads the selected
+profile, because existing shell variables take precedence over profile environment
+files. The explicit `emit` profile sets `QUARTO_EMIT=1` and synchronizes generated files
+from the reviewed procedure blocks. Both use the shared
+`GoldenPlanetaryHealthLab/quarto-manual-html` format with computation disabled.
+
+The helper stages only public catalogue snapshots, Manual, and software sources. It excludes Quarto caches,
+rendered sidecars, and notebook checkpoints; operational configuration, registry,
+data, state, staging, workspace, and publication storage are never staged.
+Files and documentation are promoted only after Quarto finishes successfully.
+
+:::
+
+## Isolated render helper
+
+::: {.manual-procedure .emit-script-sh file="{{ emit.project_root }}/scripts/render-isolated" mode="0755"}
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+project_dir=$(CDPATH= cd -- "${script_dir}/.." && pwd)
+stage_dir=$(mktemp -d "${TMPDIR:-/tmp}/depot-manual.XXXXXXXX")
+trap 'rm -rf -- "$stage_dir"' EXIT
+stage_project="$stage_dir/project"
+
+export XDG_CACHE_HOME="$stage_dir/xdg-cache"
+export XDG_DATA_HOME="$stage_dir/xdg-data"
+export XDG_RUNTIME_DIR="$stage_dir/xdg-runtime"
+mkdir -p "$stage_project" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_RUNTIME_DIR"
+
+# Copy only documentation and software, never operational data or configuration.
+for directory in notebooks src scripts examples tests; do
+  rsync -a \
+    --exclude '.quarto' \
+    --exclude 'site_libs' \
+    --exclude '*_files' \
+    --exclude '*.html' \
+    --exclude '.ipynb_checkpoints' \
+    --exclude '__pycache__' \
+    "$project_dir/$directory" "$stage_project/"
+done
+cp "$project_dir/README.md" "$stage_project/README.md"
+
+(
+  cd "$stage_project"
+  # Quarto profile environment files do not override inherited shell variables.
+  unset QUARTO_EMIT
+  quarto render notebooks "$@"
+)
+
+emit_manifest="$stage_project/notebooks/.quarto/quarto-emit-manifest.tsv"
+if [[ -f "$emit_manifest" ]]; then
+  while IFS=$'\t' read -r emitted_path source_page; do
+    [[ -n "$emitted_path" && -n "$source_page" ]] || continue
+    source_file=$(realpath -e "$stage_project/notebooks/$source_page")
+    case "$source_file" in
+      "$stage_project"/notebooks/*.qmd) ;;
+      *) echo "Refusing emit source outside notebooks: $source_page" >&2; exit 1 ;;
+    esac
+    staged_file=$(realpath -e "$stage_project/notebooks/$emitted_path")
+    case "$staged_file" in
+      "$stage_project"/src/depot/*|"$stage_project"/scripts/render-isolated) ;;
+      *) echo "Refusing unexpected emit target: $staged_file" >&2; exit 1 ;;
+    esac
+    destination="$project_dir/${staged_file#"$stage_project"/}"
+    mkdir -p "$(dirname "$destination")"
+    # Generated headers use source basenames, so no temporary paths need rebasing.
+    rsync -a "$staged_file" "$destination"
+  done < "$emit_manifest"
+fi
+
+rsync -a --delete "$stage_project/docs/" "$project_dir/docs/"
+```
+
+:::
+
+::: {.manual-check}
+
+After authoring, open `docs/index.html` for the catalogue and
+`docs/overview.html` for the Operator Manual. Confirm the Python source is
+unchanged. After emission, review the generated diff and verify source agreement:
+
+```sh
+bash -n scripts/render-isolated
+uv run --locked pytest -q tests/test_emission.py
+git diff --check
+```
+
+The reference Manual uses the same profile and isolation model to emit an R
+targets pipeline. This Manual emits Python source; scientific execution and
+publication happen only through explicit Depot commands.
+
+:::

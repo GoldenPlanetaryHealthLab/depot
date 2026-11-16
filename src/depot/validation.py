@@ -10,12 +10,47 @@ import os
 from pathlib import Path, PurePosixPath
 import stat
 
-from frictionless import Package
+from frictionless import Check, Checklist, Package
 
 from .config import digest
 from .errors import DepotError
+from .progress import ProgressCallback, ProgressUpdate, quiet
 
 RESERVED = {".git", ".datalad", ".gitmodules", ".gitattributes"}
+
+
+class ValidationProgress(Check):
+    """Observe Frictionless's normal checks without adding or suppressing errors."""
+
+    type = "depot-progress"
+
+    def __init__(self, on_progress: ProgressCallback, total: int):
+        super().__init__()
+        self.on_progress = on_progress
+        self.total = total
+        self.index = 0
+        self.rows = 0
+
+    def connect(self, resource):
+        super().connect(resource)
+        self.index += 1
+        self.rows = 0
+        self.label = f"resource {self.index}/{self.total}: {resource.name}"
+        self.on_progress(ProgressUpdate(f"Loading {self.label}"))
+
+    def validate_start(self):
+        self.on_progress(ProgressUpdate(f"Checking {self.label}", 0, unit="rows"))
+        yield from ()
+
+    def validate_row(self, row):
+        self.rows += 1
+        if self.rows % 10_000 == 0:
+            self.on_progress(ProgressUpdate(f"Checking {self.label}", self.rows, unit="rows"))
+        yield from ()
+
+    def validate_end(self):
+        self.on_progress(ProgressUpdate(f"Finished checking {self.label}", self.rows, unit="rows"))
+        yield from ()
 
 
 def release_files(root: Path, annex_root: Path | None = None) -> list[Path]:
@@ -42,9 +77,17 @@ def release_files(root: Path, annex_root: Path | None = None) -> list[Path]:
     return sorted(paths, key=lambda path: path.relative_to(root).as_posix())
 
 
-def fingerprint(root: Path, annex_root: Path | None = None) -> str:
+def fingerprint(
+    root: Path,
+    annex_root: Path | None = None,
+    *,
+    on_progress: ProgressCallback = quiet,
+) -> str:
+    on_progress(ProgressUpdate("Inspecting release files"))
+    paths = release_files(root, annex_root)
     entries = []
-    for path in release_files(root, annex_root):
+    for index, path in enumerate(paths):
+        on_progress(ProgressUpdate("Fingerprinting release files", index, len(paths), "files"))
         before = path.stat()
         checksum = hashlib.sha256()
         with path.open("rb") as stream:
@@ -58,6 +101,7 @@ def fingerprint(root: Path, annex_root: Path | None = None) -> str:
         ):
             raise DepotError("source_changed", "A release file changed while being fingerprinted.")
         entries.append([path.relative_to(root).as_posix(), after.st_size, checksum.hexdigest()])
+    on_progress(ProgressUpdate("Fingerprinted release files", len(paths), len(paths), "files"))
     return digest(entries)
 
 
@@ -78,7 +122,15 @@ def local_resource(root: Path, value: object, annex_root: Path | None) -> Path:
     return path
 
 
-def validate_package(root: Path, checks: dict, annex_root: Path | None = None) -> dict:
+def validate_package(
+    root: Path,
+    checks: dict,
+    annex_root: Path | None = None,
+    *,
+    parallel: bool = True,
+    on_progress: ProgressCallback = quiet,
+) -> dict:
+    on_progress(ProgressUpdate("Checking release files and reading datapackage.json"))
     release_files(root, annex_root)
     try:
         descriptor = json.loads((root / "datapackage.json").read_text())
@@ -128,11 +180,22 @@ def validate_package(root: Path, checks: dict, annex_root: Path | None = None) -
     }:
         raise DepotError("unsafe_resource", "Only built-in package profiles are supported.")
     try:
+        on_progress(ProgressUpdate("Validating package metadata"))
         metadata = Package.validate_descriptor(descriptor, basepath=str(root))
         if not metadata.valid:
             raise DepotError("invalid_package", "Frictionless rejected the package descriptor.")
         package = Package.from_descriptor(descriptor, basepath=str(root))
-        report = package.validate()
+        # Frictionless requires sequential execution for cross-resource foreign keys.
+        run_parallel = parallel and not any(
+            resource.schema and resource.schema.foreign_keys for resource in package.resources
+        )
+        mode = "in parallel" if run_parallel else "sequentially"
+        on_progress(ProgressUpdate(f"Validating {len(package.resources)} resources {mode}"))
+        checklist = None
+        # Frictionless 5.21 does not forward checklists to its parallel workers.
+        if not run_parallel and on_progress is not quiet:
+            checklist = Checklist(checks=[ValidationProgress(on_progress, len(package.resources))])
+        report = package.validate(checklist=checklist, parallel=run_parallel)
         if not report.valid:
             result = report.to_descriptor()
             errors = list(result.get("errors", []))
@@ -153,4 +216,5 @@ def validate_package(root: Path, checks: dict, annex_root: Path | None = None) -
         raise DepotError(
             "invalid_package", "Frictionless could not validate this package."
         ) from exc
+    on_progress(ProgressUpdate("Package validation passed"))
     return {"valid": True, "resources": summary, "package_name": descriptor.get("name", "")}

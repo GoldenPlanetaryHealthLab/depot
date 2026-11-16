@@ -10,7 +10,13 @@ set -euo pipefail
 : "${DEPOT_PROJECT:?Set the Depot checkout path}"
 : "${DEPOT_CONFIG:?Set the internal configuration path}"
 cd "$DEPOT_PROJECT"
+source /n/home03/ttapera/software/spack/share/spack/setup-env.sh
+spack env activate -d "$DEPOT_PROJECT"
+export UV_PYTHON="$DEPOT_PROJECT/.spack-env/view/bin/python"
+# Bound Frictionless's default process pool to the Slurm allocation (Python 3.14).
+export PYTHON_CPU_COUNT="${SLURM_CPUS_PER_TASK:?Slurm must provide the CPU allocation}"
 sync_status=0
-"$DEPOT_PROJECT/.venv/bin/depot" --config "$DEPOT_CONFIG" sync || sync_status=$?
-quarto render
+uv run --locked depot --config "$DEPOT_CONFIG" sync || sync_status=$?
+# Catalogue pages and the operating Manual share notebooks/ and publish to docs/.
+"$DEPOT_PROJECT/scripts/render-isolated" --profile authoring
 exit "$sync_status"

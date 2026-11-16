@@ -235,8 +235,7 @@ local function legacy_marker_path(path)
 end
 
 local function manifest_path()
-  local project_root = template_vars["project_root"] or "."
-  return project_root .. "/.quarto/quarto-emit-manifest.tsv"
+  return quarto.project.directory .. "/.quarto/quarto-emit-manifest.tsv"
 end
 
 local function read_file(path)

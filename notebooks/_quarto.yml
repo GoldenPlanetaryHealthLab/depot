@@ -1,0 +1,53 @@
+project:
+  type: website
+  output-dir: ../docs
+  render:
+    - "*.qmd"
+    - "datasets/*.qmd"
+
+# Rendering presents catalogue snapshots and Manual pages, never released data.
+engine: markdown
+
+profile:
+  default: authoring
+
+website:
+  title: "Depot"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Data catalogue
+      - href: overview.qmd
+        text: Operator Manual
+    search: true
+  sidebar:
+    id: manual
+    title: "Operate Depot"
+    contents:
+      - href: index.qmd
+        text: Browse datasets
+      - section: "Operate Depot"
+        contents:
+          - overview.qmd
+          - implementation.qmd
+          - configuration.qmd
+          - command-line.qmd
+          - catalogue.qmd
+      - section: "Python Library"
+        contents:
+          - lifecycle.qmd
+          - validation.qmd
+          - publication.qmd
+      - section: "Manual Maintenance"
+        contents:
+          - rendering.qmd
+
+execute:
+  enabled: false
+
+format:
+  GoldenPlanetaryHealthLab/quarto-manual-html: default
+
+emit:
+  project_root: ..
+  project_name: depot

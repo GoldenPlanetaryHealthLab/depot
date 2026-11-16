@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 import shutil
 
+from depot.catalog import build
+from depot.config import Config
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -45,14 +48,22 @@ def main():
     (root / "registry").mkdir()
     shutil.copyfile(repository / "registry/example.yaml", root / "registry/example.yaml")
     shutil.copyfile(repository / "examples/depot.toml", root / "depot.toml")
-    (root / "website").mkdir()
-    (root / "website/_quarto.yml").write_text(
-        "project:\n  type: website\n  output-dir: _site\nwebsite:\n  title: Depot demonstration\n"
-        "format: html\nexecute:\n  enabled: false\n"
+    # The demo is an isolated copy of the same unified site and Manual.
+    ignore = shutil.ignore_patterns(
+        ".quarto", "site_libs", "*_files", "*.html", ".ipynb_checkpoints", "__pycache__"
     )
+    for directory in ("notebooks", "src", "scripts", "examples", "tests"):
+        shutil.copytree(repository / directory, root / directory, ignore=ignore)
+    shutil.copy2(repository / "README.md", root / "README.md")
+    # Drop any published snapshot copied from the real installation. The copied
+    # Manual stays, while the synthetic registry supplies the demo catalogue.
+    shutil.rmtree(root / "notebooks/datasets", ignore_errors=True)
+    build(Config.load(root / "depot.toml"))
     print(f"Synthetic configuration created: {root / 'depot.toml'}")
     print("Run depot --config CONFIG fetch example v1, validate example v1, then push example v1.")
-    print("Run depot --config CONFIG catalog build, then quarto render WEBSITE.")
+    print(
+        f"Run depot --config CONFIG catalog build, then {root / 'scripts/render-isolated'} --profile authoring."
+    )
 
 
 if __name__ == "__main__":

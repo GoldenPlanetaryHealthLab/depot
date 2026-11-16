@@ -44,6 +44,7 @@ def identifier(value: str) -> str:
 class Target:
     layer: str
     root: Path
+    access: str = "unlocked"
 
 
 @dataclass(frozen=True)
@@ -75,7 +76,9 @@ class Config:
                 workspace=local(raw["workspace"]),
                 source_roots=tuple(local(p) for p in raw["source_roots"]),
                 targets={
-                    name: Target(value["layer"], local(value["path"]))
+                    name: Target(
+                        value["layer"], local(value["path"]), value.get("access", "unlocked")
+                    )
                     for name, value in raw["targets"].items()
                 },
             )
@@ -91,6 +94,8 @@ class Config:
             raise DepotError("invalid_config", "At least one source root and target are required.")
         if any(t.layer not in {"02_prospects", "03_refined"} for t in self.targets.values()):
             raise DepotError("invalid_config", "Only Prospects and Refined targets are supported.")
+        if any(t.access not in {"unlocked", "locked"} for t in self.targets.values()):
+            raise DepotError("invalid_config", "Target access must be unlocked or locked.")
         # No intake, history, or publication storage can be served as part of the site.
         operational = [self.state, self.staging, self.workspace]
         operational.extend(t.root for t in self.targets.values())
@@ -160,4 +165,12 @@ def check_version(manifest: dict, version: str) -> str:
 
 def binding(config: Config, manifest: dict) -> str:
     target = config.targets[manifest["destination"]["target"]]
-    return digest({"manifest": manifest, "target": str(target.root)})
+    # Access changes presentation, not the validated content or destination identity.
+    content_manifest = {**manifest, "destination": dict(manifest["destination"])}
+    content_manifest["destination"].pop("access", None)
+    return digest({"manifest": content_manifest, "target": str(target.root)})
+
+
+def access_mode(config: Config, manifest: dict) -> str:
+    target = config.targets[manifest["destination"]["target"]]
+    return manifest["destination"].get("access", target.access)

@@ -1,0 +1,23 @@
+schema_version: 1
+id: mdg-healthshed-clinic
+title: Madagascar National Clinic Data by Healthshed
+description: The database brings together monthly clinic reports from Madagascar, with historical observations from 2010–2024 and a separately ingested 2025–2026 extension
+source:
+  prospector: prospectorMDGHealthshedClinicData
+  releases: /n/holylabs/cgolden_lab/Lab/frontier/works/prospectors/prospectorMDGHealthshedClinicData/data/outputs/releases
+destination:
+  layer: 03_refined
+  target: refined
+versions:
+  pattern: 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)'
+policy:
+  mode: automatic
+  approved_dates:
+    - "2026-11-12"
+checks:
+  required_fields: [name, title, description]
+  nonempty: true
+  minimum_rows: 1
+catalogue:
+  visible: true
+  audience: Lab members and authorized collaborators only.

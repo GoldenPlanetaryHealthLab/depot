@@ -4,6 +4,7 @@
 
 """Release lifecycle shared by manual commands and batch synchronization."""
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 import re
@@ -14,6 +15,7 @@ from uuid import uuid4
 from . import publication
 from .config import Config, binding, check_version, contained, identifier, load_manifest
 from .errors import DepotError
+from .progress import ProgressCallback, ProgressUpdate, quiet
 from .storage import dataset_lock, read_json, write_json
 from .validation import fingerprint, validate_package
 
@@ -30,9 +32,10 @@ def version_key(version: str) -> tuple:
 
 
 class Depot:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, on_progress: ProgressCallback = quiet):
         config.check()
         self.config = config
+        self.on_progress = on_progress
 
     def _state(self, dataset_id: str, version: str) -> Path:
         return self.config.dataset_path(
@@ -59,6 +62,10 @@ class Depot:
         return record
 
     def _attempt(self, dataset_id: str, version: str, operation: str) -> dict:
+        def notify(update: ProgressUpdate) -> None:
+            self.on_progress(replace(update, message=f"{dataset_id} {version}: {update.message}"))
+
+        notify(ProgressUpdate(f"Starting {operation}"))
         identifier(dataset_id)
         lock = self.config.dataset_path(self.config.state, dataset_id, "lock")
         # The process that holds the lock owns state and attempt receipts.
@@ -76,13 +83,18 @@ class Depot:
             }
             candidate = None
             try:
+                notify(ProgressUpdate("Loading registry policy"))
                 manifest = load_manifest(self.config, dataset_id)
                 check_version(manifest, version)
                 record["target"] = str(
                     self.config.targets[manifest["destination"]["target"]].root / dataset_id
                 )
                 candidate = read_json(self._state(dataset_id, version))
-                result = getattr(self, "_" + operation)(manifest, version)
+                result = getattr(self, "_" + operation)(
+                    manifest,
+                    version,
+                    on_progress=notify if self.on_progress is not quiet else quiet,
+                )
                 candidate = read_json(self._state(dataset_id, version))
                 if candidate:
                     for field in ("fingerprint", "source_identity", "validation", "commit"):
@@ -104,8 +116,11 @@ class Depot:
                 if operation == "validate":
                     record["validation"] = {"valid": False, "error": error.as_dict()}
                 self._receipt(dataset_id, {**record, "status": "failed", "error": error.as_dict()})
+                notify(ProgressUpdate(f"{operation.capitalize()} failed: {error}"))
                 raise error from (exc if exc is not error else None)
-            return self._receipt(dataset_id, record)
+            receipt = self._receipt(dataset_id, record)
+            notify(ProgressUpdate(f"{operation.capitalize()} complete ({record['status']})"))
+            return receipt
 
     def fetch(self, dataset_id: str, version: str) -> dict:
         return self._attempt(dataset_id, version, "fetch")
@@ -120,7 +135,9 @@ class Depot:
         releases = Path(manifest["source"]["releases"])
         return contained(releases / version, releases)
 
-    def _fetch(self, manifest: dict, version: str) -> dict:
+    def _fetch(
+        self, manifest: dict, version: str, *, on_progress: ProgressCallback = quiet
+    ) -> dict:
         dataset_id = manifest["id"]
         source = self._source(manifest, version)
         # Reject a symlinked version directory, even if it points within the root.
@@ -128,7 +145,8 @@ class Depot:
             raise DepotError("unsafe_path", "Release version directories cannot be symlinks.")
         if not source.is_dir():
             raise DepotError("missing_release", "Requested release does not exist.")
-        current = fingerprint(source)
+        on_progress(ProgressUpdate("Checking source fingerprint"))
+        current = fingerprint(source, on_progress=on_progress)
         state_path = self._state(dataset_id, version)
         candidate = read_json(state_path)
         stage = self._stage(dataset_id, version)
@@ -140,7 +158,8 @@ class Depot:
                 "This immutable version has changed source identity or contents.",
             )
         if stage.exists():
-            if fingerprint(stage) != current:
+            on_progress(ProgressUpdate("Checking existing staged release"))
+            if fingerprint(stage, on_progress=on_progress) != current:
                 raise DepotError(
                     "version_conflict", "Existing staged version has different contents."
                 )
@@ -148,8 +167,13 @@ class Depot:
             stage.parent.mkdir(parents=True, exist_ok=True)
             with TemporaryDirectory(prefix=".fetch-", dir=stage.parent) as temporary:
                 incoming = Path(temporary) / "release"
+                on_progress(ProgressUpdate("Copying release into staging"))
                 shutil.copytree(source, incoming, symlinks=True)
-                if fingerprint(incoming) != current or fingerprint(source) != current:
+                on_progress(ProgressUpdate("Verifying copied release and unchanged source"))
+                if (
+                    fingerprint(incoming, on_progress=on_progress) != current
+                    or fingerprint(source, on_progress=on_progress) != current
+                ):
                     raise DepotError(
                         "source_changed",
                         "Source changed while being fetched; request a new immutable version.",
@@ -166,36 +190,48 @@ class Depot:
             write_json(state_path, candidate)
         return {"status": "fetched", "unchanged": candidate.get("validation") is not None}
 
-    def _checked(self, manifest: dict, version: str) -> tuple[dict, Path]:
+    def _checked(
+        self, manifest: dict, version: str, *, on_progress: ProgressCallback = quiet
+    ) -> tuple[dict, Path]:
+        on_progress(ProgressUpdate("Checking fetched release state"))
         dataset_id = manifest["id"]
         candidate = read_json(self._state(dataset_id, version))
         stage = self._stage(dataset_id, version)
         if candidate is None or not stage.is_dir():
             raise DepotError("not_fetched", "Fetch this release before validating or pushing it.")
         source = self._source(manifest, version)
+        on_progress(ProgressUpdate("Checking source fingerprint"))
         if (
             candidate["source_identity"] != str(source)
-            or fingerprint(source) != candidate["fingerprint"]
+            or fingerprint(source, on_progress=on_progress) != candidate["fingerprint"]
         ):
             raise DepotError(
                 "version_conflict",
                 "Source identity or contents changed under an immutable version.",
             )
-        if fingerprint(stage) != candidate["fingerprint"]:
+        on_progress(ProgressUpdate("Checking staged fingerprint"))
+        if fingerprint(stage, on_progress=on_progress) != candidate["fingerprint"]:
             raise DepotError("version_conflict", "Staged contents changed after fetch.")
         return candidate, stage
 
-    def _validate(self, manifest: dict, version: str) -> dict:
-        candidate, stage = self._checked(manifest, version)
-        result = validate_package(stage, manifest["checks"])
-        if fingerprint(stage) != candidate["fingerprint"]:
+    def _validate(
+        self, manifest: dict, version: str, *, on_progress: ProgressCallback = quiet
+    ) -> dict:
+        candidate, stage = self._checked(manifest, version, on_progress=on_progress)
+        result = validate_package(stage, manifest["checks"], on_progress=on_progress)
+        on_progress(ProgressUpdate("Verifying release is unchanged after validation"))
+        if fingerprint(stage, on_progress=on_progress) != candidate["fingerprint"]:
             raise DepotError("source_changed", "Staged content changed during validation.")
+        on_progress(ProgressUpdate("Recording validation result"))
         candidate["validation"] = {**result, "binding": binding(self.config, manifest)}
         write_json(self._state(manifest["id"], version), candidate)
         return {"status": "validated"}
 
-    def _push(self, manifest: dict, version: str) -> dict:
-        candidate, stage = self._checked(manifest, version)
+    def _push(
+        self, manifest: dict, version: str, *, on_progress: ProgressCallback = quiet
+    ) -> dict:
+        candidate, stage = self._checked(manifest, version, on_progress=on_progress)
+        on_progress(ProgressUpdate("Checking validation evidence and publication policy"))
         validation = candidate.get("validation")
         if not validation or validation.get("binding") != binding(self.config, manifest):
             raise DepotError(
@@ -216,7 +252,24 @@ class Depot:
                     "version_conflict",
                     "Existing successful publication has a different identity or target.",
                 )
-            return {"status": "unchanged", "commit": receipt["commit"], "verified": True}
+            # Reconcile access for legacy publications without changing release commits
+            # or repeating scientific validation. _checked already verified these bytes.
+            access = publication.materialize(
+                self.config,
+                manifest,
+                version,
+                stage,
+                candidate["fingerprint"],
+                on_progress=on_progress,
+            )
+            return {
+                "status": "unchanged" if access == receipt.get("access") else "success",
+                "commit": receipt["commit"],
+                "verified": True,
+                "clone_url": receipt.get("clone_url"),
+                "display": receipt["display"],
+                "access": access,
+            }
         dates = manifest["policy"].get("approved_dates")
         if dates and datetime.now(UTC).date().isoformat() not in dates:
             raise DepotError(
@@ -228,7 +281,13 @@ class Depot:
             write_json(self._state(manifest["id"], version), candidate)
 
         result = publication.publish(
-            self.config, manifest, version, stage, candidate["fingerprint"], on_saved=saved
+            self.config,
+            manifest,
+            version,
+            stage,
+            candidate["fingerprint"],
+            on_saved=saved,
+            on_progress=on_progress,
         )
         candidate["commit"] = result["commit"]
         write_json(self._state(manifest["id"], version), candidate)
@@ -245,9 +304,11 @@ class Depot:
 
     def sync(self) -> list[dict]:
         results = []
+        self.on_progress(ProgressUpdate("Discovering registered releases"))
         for path in sorted(self.config.registry.glob("*.yaml")):
             dataset_id = path.stem
             try:
+                self.on_progress(ProgressUpdate(f"{dataset_id}: discovering release versions"))
                 manifest = load_manifest(self.config, dataset_id)
                 releases = Path(manifest["source"]["releases"])
                 if not releases.exists():
@@ -287,6 +348,7 @@ class Depot:
                 results.append(
                     {"dataset_id": dataset_id, "status": "failed", "error": error.as_dict()}
                 )
+                self.on_progress(ProgressUpdate(f"{dataset_id}: discovery failed: {error}"))
                 continue
             if not candidates:
                 results.append({"dataset_id": dataset_id, "status": "no_new_release"})

@@ -1,15 +1,20 @@
 """Detect drift between the operator manuals and emitted Python files."""
 
+import os
 from pathlib import Path
 import re
+import shutil
+import subprocess
+
+import pytest
 
 
 def test_emitted_source_matches_manuals():
     root = Path(__file__).resolve().parents[1]
     emitted = set()
     pattern = re.compile(
-        r'::: \{[^\n]*\.emit-source-py file="\{\{ project_root \}\}/([^"\n]+)"\}\n\n'
-        r"```python\n(.*?)\n```",
+        r'::: \{[^\n]*\.emit-(?:source-py|script-sh) file="\{\{ emit.project_root \}\}/([^"\n]+)"[^\n]*\}\n\n'
+        r"```(?:python|bash)\n(.*?)\n```",
         re.DOTALL,
     )
     for manual in sorted((root / "notebooks").glob("*.qmd")):
@@ -25,4 +30,51 @@ def test_emitted_source_matches_manuals():
             assert path.read_text() == expected, f"Re-emit {relative} from {manual.name}"
             assert relative not in emitted, f"Multiple manuals emit {relative}"
             emitted.add(relative)
-    assert emitted == {str(path.relative_to(root)) for path in (root / "src/depot").glob("*.py")}
+    expected_paths = {str(path.relative_to(root)) for path in (root / "src/depot").glob("*.py")}
+    assert emitted == expected_paths | {"scripts/render-isolated"}
+    assert (root / "scripts/render-isolated").stat().st_mode & 0o111
+
+
+@pytest.mark.integration
+def test_authoring_and_emit_profiles_respect_source_changes(tmp_path):
+    if not all(shutil.which(tool) for tool in ("quarto", "rsync")):
+        pytest.skip("Manual profile verification requires Quarto and rsync.")
+    root = Path(__file__).resolve().parents[1]
+    project = tmp_path / "project"
+    project.mkdir()
+    ignore = shutil.ignore_patterns(".quarto", "site_libs", "__pycache__", ".ipynb_checkpoints")
+    for directory in ("notebooks", "src", "scripts", "examples", "tests"):
+        shutil.copytree(root / directory, project / directory, ignore=ignore)
+    shutil.copy2(root / "README.md", project / "README.md")
+    manual = project / "notebooks/catalogue.qmd"
+    body = manual.read_text()
+    original = '"""Public catalogue data frames and Great Tables, built from verified receipts."""'
+    assert original in body
+    marker = "# Deliberate Manual change for the profile regression check."
+    manual.write_text(body.replace(original, original + "\n\n" + marker, 1))
+    source = project / "src/depot/catalog.py"
+    before = source.read_bytes()
+    environment = {**os.environ, "QUARTO_EMIT": "1"}
+    helper = project / "scripts/render-isolated"
+    authoring = subprocess.run(
+        ["bash", str(helper)],
+        check=False,
+        cwd=project,
+        env=environment,
+        capture_output=True,
+        text=True,
+    )
+    assert authoring.returncode == 0, authoring.stdout + authoring.stderr
+    assert source.read_bytes() == before
+    assert (project / "docs/index.html").is_file()
+    emission = subprocess.run(
+        ["bash", str(helper), "--profile", "emit"],
+        check=False,
+        cwd=project,
+        env=environment,
+        capture_output=True,
+        text=True,
+    )
+    assert emission.returncode == 0, emission.stdout + emission.stderr
+    assert marker in source.read_text()
+    assert not (project / ".quarto").exists()

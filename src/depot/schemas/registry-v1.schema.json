@@ -17,7 +17,7 @@
     "destination": {
       "type": "object", "additionalProperties": false,
       "required": ["layer", "target"],
-      "properties": {"layer": {"enum": ["02_prospects", "03_refined"]}, "target": {"type": "string", "minLength": 1}}
+      "properties": {"layer": {"enum": ["02_prospects", "03_refined"]}, "target": {"type": "string", "minLength": 1}, "access": {"enum": ["unlocked", "locked"]}}
     },
     "versions": {
       "type": "object", "additionalProperties": false,

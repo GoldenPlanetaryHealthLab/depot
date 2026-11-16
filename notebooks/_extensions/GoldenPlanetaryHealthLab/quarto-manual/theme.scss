@@ -1,0 +1,33 @@
+/*-- scss:defaults --*/
+
+$body-bg: #f6f0e7;
+$body-color: #1f2933;
+$link-color: #0f5c4d;
+$code-block-bg: #fffaf2;
+$primary: #0f5c4d;
+
+/*-- scss:rules --*/
+
+.callout {
+  border-radius: 0.5rem;
+}
+
+.callout[data-manual-kind] {
+  border-left-width: 0.4rem;
+}
+
+.callout[data-manual-kind="prereq"] {
+  border-left-color: #dc2626;
+}
+
+.callout[data-manual-kind="procedure"] {
+  border-left-color: #16a34a;
+}
+
+.callout[data-manual-kind="check"] {
+  border-left-color: #ea580c;
+}
+
+.callout[data-manual-kind="explain"] {
+  border-left-color: #2563eb;
+}

@@ -1,0 +1,21 @@
+schema_version: 1
+id: kiribati-biomarkers
+title: Kiribati Biomarkers
+description: Biomarker and Demographic Data for Kiribati
+source:
+  prospector: prospectorKiribatiBioMarkers
+  releases: /n/holylabs/cgolden_lab/Lab/frontier/works/prospectors/prospectorKiribatiBioMarkers/data/outputs/releases
+destination:
+  layer: 02_prospects
+  target: prospects
+versions:
+  pattern: 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)'
+policy:
+  mode: automatic
+checks:
+  required_fields: [name, title, description]
+  nonempty: true
+  minimum_rows: 1
+catalogue:
+  visible: true
+  audience: Lab members and authorized collaborators only.

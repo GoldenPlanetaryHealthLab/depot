@@ -1,0 +1,233 @@
+---
+title: "Dataset details"
+sidebar: false
+---
+
+```{=html}
+<div id="depot-metadata-kiribati-biomarkers" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>
+#depot-metadata-kiribati-biomarkers table {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+#depot-metadata-kiribati-biomarkers thead, tbody, tfoot, tr, td, th { border-style: none; }
+ tr { background-color: transparent; }
+#depot-metadata-kiribati-biomarkers p { margin: 0; padding: 0; }
+ #depot-metadata-kiribati-biomarkers .gt_table { display: table; border-collapse: collapse; line-height: normal; margin-left: auto; margin-right: auto; color: #333333; font-size: 16px; font-weight: normal; font-style: normal; background-color: #FFFFFF; width: auto; border-top-style: solid; border-top-width: 2px; border-top-color: #A8A8A8; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #A8A8A8; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_caption { padding-top: 4px; padding-bottom: 4px; }
+ #depot-metadata-kiribati-biomarkers .gt_title { color: #333333; font-size: 125%; font-weight: initial; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; border-bottom-color: #FFFFFF; border-bottom-width: 0; }
+ #depot-metadata-kiribati-biomarkers .gt_subtitle { color: #333333; font-size: 85%; font-weight: initial; padding-top: 3px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; border-top-color: #FFFFFF; border-top-width: 0; }
+ #depot-metadata-kiribati-biomarkers .gt_heading { background-color: #FFFFFF; text-align: center; border-bottom-color: #FFFFFF; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_bottom_border { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_col_headings { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_col_heading { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; overflow-x: hidden; }
+ #depot-metadata-kiribati-biomarkers .gt_column_spanner_outer { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; padding-top: 0; padding-bottom: 0; padding-left: 4px; padding-right: 4px; }
+ #depot-metadata-kiribati-biomarkers .gt_column_spanner_outer:first-child { padding-left: 0; }
+ #depot-metadata-kiribati-biomarkers .gt_column_spanner_outer:last-child { padding-right: 0; }
+ #depot-metadata-kiribati-biomarkers .gt_column_spanner { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; overflow-x: hidden; display: inline-block; width: 100%; }
+ #depot-metadata-kiribati-biomarkers .gt_spanner_row { border-bottom-style: hidden; }
+ #depot-metadata-kiribati-biomarkers .gt_group_heading { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; text-align: left; }
+ #depot-metadata-kiribati-biomarkers .gt_empty_group_heading { padding: 0.5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: middle; }
+ #depot-metadata-kiribati-biomarkers .gt_from_md> :first-child { margin-top: 0; }
+ #depot-metadata-kiribati-biomarkers .gt_from_md> :last-child { margin-bottom: 0; }
+ #depot-metadata-kiribati-biomarkers .gt_row { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; margin: 10px; border-top-style: solid; border-top-width: 1px; border-top-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; overflow-x: hidden; }
+ #depot-metadata-kiribati-biomarkers .gt_stub { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; }
+ #depot-metadata-kiribati-biomarkers .gt_indent_1 { text-indent: 5px; }
+ #depot-metadata-kiribati-biomarkers .gt_indent_2 { text-indent: calc(5px * 2); }
+ #depot-metadata-kiribati-biomarkers .gt_indent_3 { text-indent: calc(5px * 3); }
+ #depot-metadata-kiribati-biomarkers .gt_indent_4 { text-indent: calc(5px * 4); }
+ #depot-metadata-kiribati-biomarkers .gt_indent_5 { text-indent: calc(5px * 5); }
+ #depot-metadata-kiribati-biomarkers .gt_stub_row_group { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; vertical-align: top; }
+ #depot-metadata-kiribati-biomarkers .gt_row_group_first td { border-top-width: 2px; }
+ #depot-metadata-kiribati-biomarkers .gt_row_group_first th { border-top-width: 2px; }
+ #depot-metadata-kiribati-biomarkers .gt_striped { color: #333333; background-color: #F4F4F4; }
+ #depot-metadata-kiribati-biomarkers .gt_table_body { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #depot-metadata-kiribati-biomarkers .gt_first_summary_row { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_last_summary_row_top { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_grand_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #depot-metadata-kiribati-biomarkers .gt_first_grand_summary_row_bottom { border-top-style: double; border-top-width: 6px; border-top-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_last_grand_summary_row_top { border-bottom-style: double; border-bottom-width: 6px; border-bottom-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #depot-metadata-kiribati-biomarkers .gt_left { text-align: left; }
+ #depot-metadata-kiribati-biomarkers .gt_center { text-align: center; }
+ #depot-metadata-kiribati-biomarkers .gt_right { text-align: right; font-variant-numeric: tabular-nums; }
+ #depot-metadata-kiribati-biomarkers .gt_font_normal { font-weight: normal; }
+ #depot-metadata-kiribati-biomarkers .gt_font_bold { font-weight: bold; }
+ #depot-metadata-kiribati-biomarkers .gt_font_italic { font-style: italic; }
+ #depot-metadata-kiribati-biomarkers .gt_super { font-size: 65%; }
+ #depot-metadata-kiribati-biomarkers .gt_footnotes { color: font-color(#FFFFFF); background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_footnote { margin: 0px; font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; }
+ #depot-metadata-kiribati-biomarkers .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #depot-metadata-kiribati-biomarkers .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #depot-metadata-kiribati-biomarkers .gt_footnote_marks { font-size: 75%; vertical-align: 0.4em; position: initial; }
+ #depot-metadata-kiribati-biomarkers .gt_asterisk { font-size: 100%; vertical-align: 0; }
+ 
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+
+<tr class="gt_col_headings">
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="depot-metadata-kiribati-biomarkers-Field">Field</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="depot-metadata-kiribati-biomarkers-Value">Value</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+  <tr>
+    <td class="gt_row gt_left">Dataset</td>
+    <td class="gt_row gt_left">kiribati-biomarkers</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Title</td>
+    <td class="gt_row gt_left">Kiribati Biomarkers</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Description</td>
+    <td class="gt_row gt_left">Biomarker and Demographic Data for Kiribati</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Layer</td>
+    <td class="gt_row gt_left">02_prospects</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Version</td>
+    <td class="gt_row gt_left">v0.2.2</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Published</td>
+    <td class="gt_row gt_left">2026-11-14</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Commit</td>
+    <td class="gt_row gt_left">428bb3ae8faecd3f05ab6fab027b06ff34231834</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Prospector</td>
+    <td class="gt_row gt_left">prospectorKiribatiBioMarkers</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Package</td>
+    <td class="gt_row gt_left">kiribati-biomarkers</td>
+  </tr>
+  <tr>
+    <td class="gt_row gt_left">Intended audience/use</td>
+    <td class="gt_row gt_left">Lab members and authorized collaborators only.</td>
+  </tr>
+</tbody>
+
+</table>
+
+</div>
+
+```
+
+Status: validated, published, and verified by fresh retrieval.
+
+## Resources
+
+```{=html}
+<div id="depot-resources-kiribati-biomarkers" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>
+#depot-resources-kiribati-biomarkers table {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+#depot-resources-kiribati-biomarkers thead, tbody, tfoot, tr, td, th { border-style: none; }
+ tr { background-color: transparent; }
+#depot-resources-kiribati-biomarkers p { margin: 0; padding: 0; }
+ #depot-resources-kiribati-biomarkers .gt_table { display: table; border-collapse: collapse; line-height: normal; margin-left: auto; margin-right: auto; color: #333333; font-size: 16px; font-weight: normal; font-style: normal; background-color: #FFFFFF; width: 100%; border-top-style: solid; border-top-width: 2px; border-top-color: #A8A8A8; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #A8A8A8; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_caption { padding-top: 4px; padding-bottom: 4px; }
+ #depot-resources-kiribati-biomarkers .gt_title { color: #333333; font-size: 125%; font-weight: initial; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; border-bottom-color: #FFFFFF; border-bottom-width: 0; }
+ #depot-resources-kiribati-biomarkers .gt_subtitle { color: #333333; font-size: 85%; font-weight: initial; padding-top: 3px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; border-top-color: #FFFFFF; border-top-width: 0; }
+ #depot-resources-kiribati-biomarkers .gt_heading { background-color: #FFFFFF; text-align: center; border-bottom-color: #FFFFFF; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_bottom_border { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_col_headings { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_col_heading { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; overflow-x: hidden; }
+ #depot-resources-kiribati-biomarkers .gt_column_spanner_outer { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; padding-top: 0; padding-bottom: 0; padding-left: 4px; padding-right: 4px; }
+ #depot-resources-kiribati-biomarkers .gt_column_spanner_outer:first-child { padding-left: 0; }
+ #depot-resources-kiribati-biomarkers .gt_column_spanner_outer:last-child { padding-right: 0; }
+ #depot-resources-kiribati-biomarkers .gt_column_spanner { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; overflow-x: hidden; display: inline-block; width: 100%; }
+ #depot-resources-kiribati-biomarkers .gt_spanner_row { border-bottom-style: hidden; }
+ #depot-resources-kiribati-biomarkers .gt_group_heading { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; text-align: left; }
+ #depot-resources-kiribati-biomarkers .gt_empty_group_heading { padding: 0.5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: middle; }
+ #depot-resources-kiribati-biomarkers .gt_from_md> :first-child { margin-top: 0; }
+ #depot-resources-kiribati-biomarkers .gt_from_md> :last-child { margin-bottom: 0; }
+ #depot-resources-kiribati-biomarkers .gt_row { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; margin: 10px; border-top-style: solid; border-top-width: 1px; border-top-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; overflow-x: hidden; }
+ #depot-resources-kiribati-biomarkers .gt_stub { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; }
+ #depot-resources-kiribati-biomarkers .gt_indent_1 { text-indent: 5px; }
+ #depot-resources-kiribati-biomarkers .gt_indent_2 { text-indent: calc(5px * 2); }
+ #depot-resources-kiribati-biomarkers .gt_indent_3 { text-indent: calc(5px * 3); }
+ #depot-resources-kiribati-biomarkers .gt_indent_4 { text-indent: calc(5px * 4); }
+ #depot-resources-kiribati-biomarkers .gt_indent_5 { text-indent: calc(5px * 5); }
+ #depot-resources-kiribati-biomarkers .gt_stub_row_group { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; vertical-align: top; }
+ #depot-resources-kiribati-biomarkers .gt_row_group_first td { border-top-width: 2px; }
+ #depot-resources-kiribati-biomarkers .gt_row_group_first th { border-top-width: 2px; }
+ #depot-resources-kiribati-biomarkers .gt_striped { color: #333333; background-color: #F4F4F4; }
+ #depot-resources-kiribati-biomarkers .gt_table_body { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #depot-resources-kiribati-biomarkers .gt_first_summary_row { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_last_summary_row_top { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_grand_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #depot-resources-kiribati-biomarkers .gt_first_grand_summary_row_bottom { border-top-style: double; border-top-width: 6px; border-top-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_last_grand_summary_row_top { border-bottom-style: double; border-bottom-width: 6px; border-bottom-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #depot-resources-kiribati-biomarkers .gt_left { text-align: left; }
+ #depot-resources-kiribati-biomarkers .gt_center { text-align: center; }
+ #depot-resources-kiribati-biomarkers .gt_right { text-align: right; font-variant-numeric: tabular-nums; }
+ #depot-resources-kiribati-biomarkers .gt_font_normal { font-weight: normal; }
+ #depot-resources-kiribati-biomarkers .gt_font_bold { font-weight: bold; }
+ #depot-resources-kiribati-biomarkers .gt_font_italic { font-style: italic; }
+ #depot-resources-kiribati-biomarkers .gt_super { font-size: 65%; }
+ #depot-resources-kiribati-biomarkers .gt_footnotes { color: font-color(#FFFFFF); background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_footnote { margin: 0px; font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; }
+ #depot-resources-kiribati-biomarkers .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #depot-resources-kiribati-biomarkers .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #depot-resources-kiribati-biomarkers .gt_footnote_marks { font-size: 75%; vertical-align: 0.4em; position: initial; }
+ #depot-resources-kiribati-biomarkers .gt_asterisk { font-size: 100%; vertical-align: 0; }
+ 
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+
+<tr class="gt_col_headings">
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="depot-resources-kiribati-biomarkers-name">Resource</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="depot-resources-kiribati-biomarkers-files">Files</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="depot-resources-kiribati-biomarkers-bytes">Bytes</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+  <tr>
+    <td class="gt_row gt_left">biomarker_ptx</td>
+    <td class="gt_row gt_right">1</td>
+    <td class="gt_row gt_right">173,963</td>
+  </tr>
+</tbody>
+
+</table>
+
+</div>
+
+```
+
+## Use the data directly
+
+The lab's Goldmine contains populated, ordinary writable files at `02_prospects/kiribati-biomarkers.data/releases/v0.2.2/` relative to its root. Open these files with Python, R, or your usual tools; no DataLad commands are required. Ask the lab operator for the Goldmine root if needed. Work on a personal copy when making changes to a shared release.
+
+## Retrieve the archived version with DataLad
+
+Set `DEPOT_STORE` to the dataset's RIA store path supplied by the lab operator. Use these commands to retrieve the pinned release:
+
+<pre><code>datalad clone &quot;ria+file://$&#123;DEPOT_STORE&#125;#~kiribati-biomarkers&quot; kiribati-biomarkers
+cd kiribati-biomarkers
+git checkout --detach 428bb3ae8faecd3f05ab6fab027b06ff34231834
+datalad get releases/v0.2.2</code></pre>
+
+Package metadata: releases/v0.2.2/datapackage.json.
+
+Prospects can change between versions. Refined releases follow a stricter schedule.

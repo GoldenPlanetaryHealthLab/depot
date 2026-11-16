@@ -2,10 +2,13 @@
 # Source: catalogue.qmd
 # Do not edit directly unless you intend to stop using this document as the source of truth.
 
-"""Deterministic public pages built exclusively from verified receipts."""
+"""Public catalogue data frames and Great Tables, built from verified receipts."""
 
 from html import escape
 from pathlib import Path
+
+from great_tables import GT
+import pandas as pd
 
 from .config import Config, load_manifest
 from .errors import DepotError
@@ -13,6 +16,31 @@ from .service import Depot, version_key
 from .storage import dataset_lock, read_json, write_json
 
 NOTICE = "Prospects can change between versions. Refined releases follow a stricter schedule."
+
+# An explicit projection prevents internal receipt fields from reaching the website.
+PUBLIC_COLUMNS = {
+    "id": "id",
+    "title": "title",
+    "description": "description",
+    "layer": "layer",
+    "audience": "audience",
+    "receipt.version": "version",
+    "receipt.timestamp": "published",
+    "receipt.commit": "commit",
+    "receipt.display.prospector": "prospector",
+    "receipt.display.package_name": "package_name",
+    "receipt.display.resources": "resources",
+    "receipt.access.mode": "access_mode",
+    "receipt.access.populated": "populated",
+}
+CATALOGUE_LABELS = {
+    "id": "Dataset",
+    "title": "Title",
+    "layer": "Layer",
+    "version": "Latest verified version",
+    "description": "Description",
+    "published": "Last published",
+}
 
 
 def text(value: object) -> str:
@@ -56,6 +84,40 @@ def public_entries(config: Config) -> list[dict]:
     return entries
 
 
+def catalogue_data(config: Config) -> pd.DataFrame:
+    """Load one public row per dataset; retain a stable schema when there are none."""
+    return (
+        pd.json_normalize(public_entries(config))
+        .reindex(columns=list(PUBLIC_COLUMNS))
+        .rename(columns=PUBLIC_COLUMNS)
+        .assign(published=lambda df: df["published"].astype("string").str.split("T").str[0])
+        .sort_values("id", ignore_index=True)
+    )
+
+
+def catalogue_table(data: pd.DataFrame) -> GT:
+    """Describe the display declaratively; Great Tables owns the HTML markup."""
+    return (
+        GT(data.loc[:, list(CATALOGUE_LABELS)], id="depot-catalogue")
+        .cols_label(**CATALOGUE_LABELS)
+        .fmt(columns=list(CATALOGUE_LABELS), fns=text)
+        .fmt(columns="id", fns=lambda value: f'<a href="datasets/{value}.html">{text(value)}</a>')
+        .cols_align(align="left")
+        .tab_options(table_width="100%")
+    )
+
+
+def resources_table(resources: list[dict], dataset_id: str) -> GT:
+    data = pd.DataFrame.from_records(resources, columns=["name", "files", "bytes"])
+    return (
+        GT(data, id=f"depot-resources-{dataset_id}")
+        .cols_label(name="Resource", files="Files", bytes="Bytes")
+        .fmt(columns="name", fns=text)
+        .fmt_integer(columns=["files", "bytes"])
+        .tab_options(table_width="100%")
+    )
+
+
 def _write(path: Path, content: str) -> None:
     from tempfile import NamedTemporaryFile
 
@@ -68,66 +130,81 @@ def _write(path: Path, content: str) -> None:
 
 def build(config: Config) -> list[dict]:
     with dataset_lock(config.state / "catalogue.lock"):
-        entries = public_entries(config)
-        rows = []
+        data = catalogue_data(config)
         pages = []
-        for entry in entries:
-            dataset_id = entry["id"]
-            receipt = entry["receipt"]
-            version = receipt["version"]
-            date = receipt["timestamp"].split("T")[0]
-            rows.append(
-                f'<tr><td><a href="datasets/{dataset_id}.html">{text(entry["title"])}</a>'
-                f"<br><code>{dataset_id}</code></td><td>{text(entry['layer'])}</td>"
-                f"<td>{text(version)}</td><td>{text(entry['description'])}</td><td>{date}</td></tr>"
-            )
-            resources = "\n".join(
-                f"<tr><td>{text(resource['name'])}</td><td>{resource['files']}</td><td>{resource['bytes']}</td></tr>"
-                for resource in receipt["display"]["resources"]
-            )
-            # The operator supplies the internal store path; no private URL is copied
-            # from a receipt to the public site. Commit pinning makes retrieval reproducible.
+        for row in data.to_dict(orient="records"):
+            dataset_id = row["id"]
+            version = row["version"]
+            # Operators supply the private store; the receipt pins the public commit.
             store_variable = "${DEPOT_STORE}"
             commands = (
                 f'datalad clone "ria+file://{store_variable}#~{dataset_id}" {dataset_id}\n'
                 f"cd {dataset_id}\n"
-                f"git checkout --detach {receipt['commit']}\n"
+                f"git checkout --detach {row['commit']}\n"
                 f"datalad get releases/{version}"
             )
+            direct_access = ""
+            if row.get("access_mode") == "unlocked" and row.get("populated") is True:
+                relative = f"{row['layer']}/{dataset_id}.data/releases/{version}/"
+                direct_access = (
+                    "## Use the data directly\n\n"
+                    "The lab's Goldmine contains populated, ordinary writable files at "
+                    f"`{relative}` relative to its root. Open these files with Python, R, "
+                    "or your usual tools; no DataLad commands are required. "
+                    "Ask the lab operator for the Goldmine root if needed. "
+                    "Work on a personal copy when making changes to a shared release.\n\n"
+                )
+            details = pd.DataFrame(
+                {"Field": label, "Value": row[field]}
+                for field, label in {
+                    "id": "Dataset",
+                    "title": "Title",
+                    "description": "Description",
+                    "layer": "Layer",
+                    "version": "Version",
+                    "published": "Published",
+                    "commit": "Commit",
+                    "prospector": "Prospector",
+                    "package_name": "Package",
+                    "audience": "Intended audience/use",
+                }.items()
+            )
+            metadata_table = GT(details, id=f"depot-metadata-{dataset_id}").fmt(
+                columns="Value", fns=text
+            )
             page = (
-                f'---\ntitle: "Dataset details"\n---\n\n'
-                f"<h1>{text(entry['title'])}</h1>\n\n"
-                f"<p>{text(entry['description'])}</p>\n\n"
-                f"<p>ID: <code>{dataset_id}</code>; layer: {text(entry['layer'])}; "
-                f"version: <code>{text(version)}</code>; published: {date}.</p>\n\n"
-                f"<p>Provenance: {text(receipt['display']['prospector'])}; "
-                f"package: {text(receipt['display']['package_name'])}.</p>\n\n"
-                f"<p>Status: validated, published, and verified by fresh retrieval.</p>\n\n"
-                f"<p>Intended audience/use: {text(entry['audience'])}.</p>\n\n"
-                f"<table><thead><tr><th>Resource</th><th>Files</th><th>Bytes</th></tr></thead>"
-                f"<tbody>{resources}</tbody></table>\n\n"
-                "<h2>Retrieve this version</h2>\n\n"
-                "<p>Set <code>DEPOT_STORE</code> to the dataset’s RIA store path supplied by "
-                "the lab operator. Internal publication receipts contain that path. "
-                "Stagecoach can use the same clone, commit, and get sequence.</p>\n\n"
-                f"<pre><code>{text(commands)}</code></pre>\n\n"
-                f"<p>Package metadata after retrieval: <code>releases/{text(version)}/datapackage.json</code>.</p>\n\n"
-                f"<p>{NOTICE}</p>\n"
+                '---\ntitle: "Dataset details"\nsidebar: false\n---\n\n```{=html}\n'
+                + metadata_table.as_raw_html()
+                + "\n```\n\nStatus: validated, published, and verified by fresh retrieval.\n\n"
+                + "## Resources\n\n```{=html}\n"
+                + resources_table(row["resources"], dataset_id).as_raw_html()
+                + "\n```\n\n"
+                + direct_access
+                + "## Retrieve the archived version with DataLad\n\n"
+                + "Set `DEPOT_STORE` to the dataset's RIA store path supplied by the lab operator. "
+                + "Use these commands to retrieve the pinned release:\n\n"
+                + f"<pre><code>{text(commands)}</code></pre>\n\n"
+                + f"Package metadata: releases/{version}/datapackage.json.\n\n{NOTICE}\n"
             )
             relative = f"datasets/{dataset_id}.qmd"
             _write(config.website / relative, page)
             pages.append(relative)
-        index = (
-            '---\ntitle: "Depot data catalogue"\n---\n\n'
-            f"<p>{NOTICE}</p>\n\n"
-            "<p>Only validated publications verified by fresh retrieval are listed.</p>\n\n"
-            "<table><thead><tr><th>Dataset</th><th>Layer</th><th>Latest verified version</th>"
-            "<th>Description</th><th>Last published</th></tr></thead><tbody>"
-            + "\n".join(rows)
-            + "</tbody></table>\n"
+        table = (
+            "```{=html}\n" + catalogue_table(data).as_raw_html() + "\n```"
+            if not data.empty
+            else "No verified datasets are available yet."
         )
-        if not rows:
-            index += "\nNo verified datasets are available yet.\n"
+        index = (
+            '---\ntitle: "Depot data catalogue"\nsidebar: false\ntoc: false\n---\n\n'
+            + "Browse datasets available through the lab's Goldmine. Select a dataset to see "
+            + "its description, version, resources, and retrieval instructions.\n\n"
+            + table
+            + "\n\n## About this catalogue\n\n"
+            + "Entries appear after publication and fresh-retrieval verification. "
+            + "Data remain in Goldmine; this site presents metadata and retrieval instructions.\n\n"
+            + f"{NOTICE}\n\n"
+            + "See the [Operator Manual](overview.qmd) to register and publish a dataset.\n"
+        )
         _write(config.website / "index.qmd", index)
         # Delete only files previously generated by Depot, never an uncontrolled scan.
         previous = read_json(config.state / "catalogue-pages.json") or {"pages": []}
@@ -137,11 +214,9 @@ def build(config: Config) -> list[dict]:
             path = contained(config.website / relative, config.website / "datasets")
             path.unlink(missing_ok=True)
         write_json(config.state / "catalogue-pages.json", {"pages": pages})
-        return [
-            {
-                "dataset_id": entry["id"],
-                "status": "catalogued",
-                "version": entry["receipt"]["version"],
-            }
-            for entry in entries
-        ]
+        return (
+            data.loc[:, ["id", "version"]]
+            .rename(columns={"id": "dataset_id"})
+            .assign(status="catalogued")
+            .to_dict(orient="records")
+        )

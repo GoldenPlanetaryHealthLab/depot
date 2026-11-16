@@ -8,14 +8,63 @@ import argparse
 import json
 import os
 from pathlib import Path
+from time import monotonic
 
 from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
+from rich.text import Text
 
 from .catalog import build
 from .config import Config
 from .errors import DepotError
+from .progress import ProgressUpdate, quiet
 from .service import Depot
+
+
+class CLIProgress:
+    """Render live Rich status in terminals and bounded status logs in batch jobs."""
+
+    def __init__(self, enabled: bool = True, console: Console | None = None):
+        self.enabled = enabled
+        self.console = console if console is not None else Console(stderr=True)
+        self.display = Progress(
+            SpinnerColumn(),
+            TextColumn("{task.description}", markup=False),
+            TextColumn("{task.fields[count]}", markup=False),
+            TimeElapsedColumn(),
+            console=self.console,
+            transient=True,
+            disable=not enabled or not self.console.is_terminal,
+        )
+        self.task = self.display.add_task("Starting Depot", total=None, count="")
+        self.started = monotonic()
+        self.last_message = None
+        self.last_logged = self.started
+
+    def start(self) -> None:
+        self.display.start()
+
+    def stop(self) -> None:
+        self.display.stop()
+
+    def __call__(self, update: ProgressUpdate) -> None:
+        if not self.enabled:
+            return
+        count = ""
+        if update.completed is not None:
+            count = f"{update.completed:,}"
+            if update.total is not None:
+                count += f"/{update.total:,}"
+            count += f" {update.unit}"
+        self.display.update(self.task, description=update.message, count=count)
+        if not self.console.is_terminal:
+            now = monotonic()
+            if update.message != self.last_message or now - self.last_logged >= 30:
+                suffix = f" — {count}" if count else ""
+                self.console.print(Text(f"[{now - self.started:,.1f}s] {update.message}{suffix}"))
+                self.last_logged = now
+        self.last_message = update.message
 
 
 def parser() -> argparse.ArgumentParser:
@@ -26,7 +75,7 @@ def parser() -> argparse.ArgumentParser:
         "--config", type=Path, default=Path(os.environ.get("DEPOT_CONFIG", "depot.toml"))
     )
     result.add_argument(
-        "--json", action="store_true", help="Emit structured results without Rich formatting."
+        "--json", action="store_true", help="Emit JSON results only, without progress messages."
     )
     commands = result.add_subparsers(dest="command", required=True)
     for name in ("fetch", "validate", "push"):
@@ -45,19 +94,23 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    progress = Console(stderr=True).status(f"Depot: {args.command} …")
-    if not args.json and args.command != "receipts":
-        progress.start()
+    progress = CLIProgress(enabled=not args.json and args.command != "receipts")
+    progress.start()
+    on_progress = progress if progress.enabled else quiet
+    interrupted = False
     try:
+        on_progress(ProgressUpdate("Loading Depot configuration"))
         config = Config.load(args.config)
-        depot = Depot(config)
+        depot = Depot(config, on_progress=on_progress)
         if args.command == "catalog":
+            on_progress(ProgressUpdate("Building catalogue from verified publication receipts"))
             results = build(config)
         elif args.command == "receipts":
             results = depot.receipts(args.dataset_id)
         elif args.command == "sync":
             results = depot.sync()
             # Even when one dataset fails, catalogue prior and other successful releases.
+            on_progress(ProgressUpdate("Building catalogue from verified publication receipts"))
             build(config)
         else:
             results = [getattr(depot, args.command)(args.dataset_id, args.version)]
@@ -67,8 +120,21 @@ def main(argv: list[str] | None = None) -> int:
             else False
         )
     except DepotError as exc:
-        results = [{"status": "failed", "error": exc.as_dict()}]
+        results = [{
+            "dataset_id": getattr(args, "dataset_id", None),
+            "version": getattr(args, "version", None),
+            "status": "failed",
+            "error": exc.as_dict(),
+        }]
         failed = True
+    except KeyboardInterrupt:
+        results = [{
+            "dataset_id": getattr(args, "dataset_id", None),
+            "version": getattr(args, "version", None),
+            "status": "interrupted",
+            "error": DepotError("interrupted", "Operation interrupted.").as_dict(),
+        }]
+        failed = interrupted = True
     finally:
         progress.stop()
     if args.json or args.command == "receipts":
@@ -77,10 +143,10 @@ def main(argv: list[str] | None = None) -> int:
         table = Table("Dataset", "Version", "Status", "Detail")
         for result in results:
             table.add_row(
-                result.get("dataset_id", "—"),
+                result.get("dataset_id") or "—",
                 result.get("version") or "—",
                 result.get("status", "—"),
                 (result.get("error") or {}).get("message", ""),
             )
         Console().print(table)
-    return 1 if failed else 0
+    return 130 if interrupted else (1 if failed else 0)

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Validation only. Review partition/account, memory, time, and log paths before submitting.
+# From the checkout, after fetching the release:
+#   export DEPOT_PROJECT="$PWD" DEPOT_CONFIG="$PWD/depot.toml"
+#   uv run --locked depot --config "$DEPOT_CONFIG" fetch mdg-healthshed-clinic v0.1.0
+#   sbatch -p hsph scripts/validate.sbatch.example mdg-healthshed-clinic v0.1.0
+#SBATCH --job-name=depot-validate
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=24G
+#SBATCH --time=24:00:00
+#SBATCH --output=depot-validate-%j.out
+#SBATCH --error=depot-validate-%j.err
+
+set -euo pipefail
+: "${DEPOT_PROJECT:?Set the Depot checkout path}"
+: "${DEPOT_CONFIG:?Set the absolute internal configuration path}"
+: "${1:?Pass the dataset ID as the first argument}"
+: "${2:?Pass the release version as the second argument}"
+
+cd "$DEPOT_PROJECT"
+source /n/home03/ttapera/software/spack/share/spack/setup-env.sh
+spack env activate -d "$DEPOT_PROJECT"
+export UV_PYTHON="$DEPOT_PROJECT/.spack-env/view/bin/python"
+# Bound Frictionless's default process pool to the Slurm allocation (Python 3.14).
+export PYTHON_CPU_COUNT="${SLURM_CPUS_PER_TASK:?Slurm must provide the CPU allocation}"
+
+uv run --locked depot --config "$DEPOT_CONFIG" validate "$1" "$2"

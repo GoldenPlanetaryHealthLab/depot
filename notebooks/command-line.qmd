@@ -1,22 +1,38 @@
 ---
 title: "Command-line interface"
-filters:
-  - quarto-emit
-emit:
-  project_root: ..
 ---
 
-Use depot --config CONFIG fetch ID VERSION, then validate and push with the same arguments. depot catalog build generates source pages; quarto render renders the website. depot sync processes every registered release candidate and rebuilds the catalogue. Inspect rejected attempts with depot receipts ID.
+For a new dataset, follow the [README setup and real-data walkthrough](overview.qmd#add-data).
+Register the completed release first, then run `fetch ID VERSION`,
+`validate ID VERSION`, and `push ID VERSION`, in that order, with the same
+`--config FILE` on every command. Validation does not fetch implicitly. After a
+verified push, run `catalog build` with that configuration and render its website
+with `scripts/render-isolated --profile authoring`. The catalogue and Manual
+share `notebooks/` and render to `docs/`. Inspect errors with `receipts ID`.
+
+`sync` automates these steps through catalogue generation for every dataset and
+release directory in the selected registry; it has no dataset selector and does
+not render the website. Use individual commands for a selected release.
+
+Interactive commands show the active phase and elapsed time. Fingerprinting reports
+file counts. Validation runs resources in parallel by default and reports its phase;
+set `PYTHON_CPU_COUNT` before launching Depot to limit workers. Packages with foreign
+keys run sequentially, identifying each resource and reporting rows every 10,000 rows.
+Those row counts restart for each resource and do not imply a known total or an
+estimated completion time. Redirected output and batch jobs receive
+plain status lines on stderr, with repeated counts limited to one line per 30 seconds.
+`--json` suppresses all progress and keeps stdout machine-readable; receipts also
+remain JSON-only. Ctrl-C stops the display and returns exit status 130.
 
 ::: {.manual-prereq}
-Use Python 3.14, the locked Python dependencies, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
+Use Spack-managed Python 3.14, Python packages locked by uv, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.
 :::
 
 ## Run manual and batch operations
 
 ### `cli.py`
 
-::: {.manual-procedure .emit-source-py file="{{ project_root }}/src/depot/cli.py"}
+::: {.manual-procedure .emit-source-py file="{{ emit.project_root }}/src/depot/cli.py"}
 
 ```python
 """Small Rich/argparse interface over the release lifecycle."""
@@ -25,14 +41,63 @@ import argparse
 import json
 import os
 from pathlib import Path
+from time import monotonic
 
 from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
+from rich.text import Text
 
 from .catalog import build
 from .config import Config
 from .errors import DepotError
+from .progress import ProgressUpdate, quiet
 from .service import Depot
+
+
+class CLIProgress:
+    """Render live Rich status in terminals and bounded status logs in batch jobs."""
+
+    def __init__(self, enabled: bool = True, console: Console | None = None):
+        self.enabled = enabled
+        self.console = console if console is not None else Console(stderr=True)
+        self.display = Progress(
+            SpinnerColumn(),
+            TextColumn("{task.description}", markup=False),
+            TextColumn("{task.fields[count]}", markup=False),
+            TimeElapsedColumn(),
+            console=self.console,
+            transient=True,
+            disable=not enabled or not self.console.is_terminal,
+        )
+        self.task = self.display.add_task("Starting Depot", total=None, count="")
+        self.started = monotonic()
+        self.last_message = None
+        self.last_logged = self.started
+
+    def start(self) -> None:
+        self.display.start()
+
+    def stop(self) -> None:
+        self.display.stop()
+
+    def __call__(self, update: ProgressUpdate) -> None:
+        if not self.enabled:
+            return
+        count = ""
+        if update.completed is not None:
+            count = f"{update.completed:,}"
+            if update.total is not None:
+                count += f"/{update.total:,}"
+            count += f" {update.unit}"
+        self.display.update(self.task, description=update.message, count=count)
+        if not self.console.is_terminal:
+            now = monotonic()
+            if update.message != self.last_message or now - self.last_logged >= 30:
+                suffix = f" — {count}" if count else ""
+                self.console.print(Text(f"[{now - self.started:,.1f}s] {update.message}{suffix}"))
+                self.last_logged = now
+        self.last_message = update.message
 
 
 def parser() -> argparse.ArgumentParser:
@@ -43,7 +108,7 @@ def parser() -> argparse.ArgumentParser:
         "--config", type=Path, default=Path(os.environ.get("DEPOT_CONFIG", "depot.toml"))
     )
     result.add_argument(
-        "--json", action="store_true", help="Emit structured results without Rich formatting."
+        "--json", action="store_true", help="Emit JSON results only, without progress messages."
     )
     commands = result.add_subparsers(dest="command", required=True)
     for name in ("fetch", "validate", "push"):
@@ -62,19 +127,23 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    progress = Console(stderr=True).status(f"Depot: {args.command} …")
-    if not args.json and args.command != "receipts":
-        progress.start()
+    progress = CLIProgress(enabled=not args.json and args.command != "receipts")
+    progress.start()
+    on_progress = progress if progress.enabled else quiet
+    interrupted = False
     try:
+        on_progress(ProgressUpdate("Loading Depot configuration"))
         config = Config.load(args.config)
-        depot = Depot(config)
+        depot = Depot(config, on_progress=on_progress)
         if args.command == "catalog":
+            on_progress(ProgressUpdate("Building catalogue from verified publication receipts"))
             results = build(config)
         elif args.command == "receipts":
             results = depot.receipts(args.dataset_id)
         elif args.command == "sync":
             results = depot.sync()
             # Even when one dataset fails, catalogue prior and other successful releases.
+            on_progress(ProgressUpdate("Building catalogue from verified publication receipts"))
             build(config)
         else:
             results = [getattr(depot, args.command)(args.dataset_id, args.version)]
@@ -84,8 +153,21 @@ def main(argv: list[str] | None = None) -> int:
             else False
         )
     except DepotError as exc:
-        results = [{"status": "failed", "error": exc.as_dict()}]
+        results = [{
+            "dataset_id": getattr(args, "dataset_id", None),
+            "version": getattr(args, "version", None),
+            "status": "failed",
+            "error": exc.as_dict(),
+        }]
         failed = True
+    except KeyboardInterrupt:
+        results = [{
+            "dataset_id": getattr(args, "dataset_id", None),
+            "version": getattr(args, "version", None),
+            "status": "interrupted",
+            "error": DepotError("interrupted", "Operation interrupted.").as_dict(),
+        }]
+        failed = interrupted = True
     finally:
         progress.stop()
     if args.json or args.command == "receipts":
@@ -94,17 +176,17 @@ def main(argv: list[str] | None = None) -> int:
         table = Table("Dataset", "Version", "Status", "Detail")
         for result in results:
             table.add_row(
-                result.get("dataset_id", "—"),
+                result.get("dataset_id") or "—",
                 result.get("version") or "—",
                 result.get("status", "—"),
                 (result.get("error") or {}).get("message", ""),
             )
         Console().print(table)
-    return 1 if failed else 0
+    return 130 if interrupted else (1 if failed else 0)
 ```
 
 :::
 
 ::: {.manual-check}
-After editing this manual, emit source explicitly with `QUARTO_EMIT=1 quarto render`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
+After editing this manual, emit source explicitly with `scripts/render-isolated --profile emit`, run `uv run pytest`, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.
 :::
