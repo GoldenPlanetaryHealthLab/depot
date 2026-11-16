@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>DataLad publication – Depot</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-123202c42a8f36db05ccdc08341afa36.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/quarto-contrib/fontawesome6-6.7.2/all.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/fontawesome6-6.7.2/latex-fontsize.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Depot</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="./index.html" aria-current="page"> 
+<span class="menu-text">Data catalogue</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./overview.html"> 
+<span class="menu-text">Operator Manual</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./lifecycle.html">Python Library</a></li><li class="breadcrumb-item"><a href="./publication.html">DataLad publication</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Browse datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Operate Depot</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Operate Depot</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./implementation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Depot operator manual</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./configuration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Registry and operational roots</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./command-line.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Command-line interface</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./catalogue.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Build the data catalogue</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Python Library</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lifecycle.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Release lifecycle and synchronization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./validation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Release validation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./publication.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">DataLad publication</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Manual Maintenance</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rendering.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Render and emit the Manual</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#save-publish-and-retrieve" id="toc-save-publish-and-retrieve" class="nav-link active" data-scroll-target="#save-publish-and-retrieve"><em>Save, publish, and retrieve</em></a>
+  <ul class="collapse">
+  <li><a href="#publication.py" id="toc-publication.py" class="nav-link" data-scroll-target="#publication.py"><em><code>publication.py</code></em></a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./lifecycle.html">Python Library</a></li><li class="breadcrumb-item"><a href="./publication.html">DataLad publication</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">DataLad publication</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Each dataset has one managed DataLad repository containing <code>releases/VERSION</code> and a local RIA archive at <code>TARGET_ROOT/ID</code>. DataLad configures a Git sibling plus an annex storage sibling. A RIA archive is a bare repository, so unlocking files in the publisher’s workspace cannot make ordinary files appear in Goldmine. See <a href="https://docs.datalad.org/en/stable/generated/man/datalad-create-sibling-ria.html">DataLad’s RIA layout</a>.</p>
+<p>The default <code>access = "unlocked"</code> also exposes an independent ordinary-file view at <code>TARGET_ROOT/ID.data/releases/VERSION</code>. After retrieval and validation, Depot copies the verified bytes there atomically and checks their fingerprint. The files are populated, writable by their owner, and contain no annex symlinks or placeholders. Group access follows filesystem permissions and the installation’s umask. There is one extra full copy of the data; no hardlinks can let user edits alter archived objects. Personal analysis copies keep the shared view intact.</p>
+<p>Set target <code>access = "locked"</code> in TOML, or override with <code>destination.access</code> in a dataset’s registry YAML, to retain archive-only publication. New annex files in the managed workspace follow that access setting through the supported <a href="https://git-annex.branchable.com/tips/unlocked_files/"><code>annex.addunlocked</code> option</a>. A fresh consumer clone still requires <code>datalad get</code>, regardless of pointer mode.</p>
+<p>Repeat pushes reconcile missing views from staged bytes matching the previously verified fingerprint, retaining the original archived commit without another Frictionless pass. Changed ordinary files cause an <code>access_conflict</code>; they are never overwritten. A failed first materialization leaves no successful receipt and can be retried. Previous successful archive receipts remain intact. Switching to locked mode skips materialization; it does not delete an existing ordinary copy or retroactively lock earlier commits. No parent dataset is assumed.</p>
+<div class="manual-prereq callout callout-style-default callout-important no-icon callout-titled" data-manual-kind="prereq">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span><i class="fa-solid fa-list-check" aria-label="list-check"></i> Prerequisite
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Use Spack-managed Python 3.14, Python packages locked by uv, DataLad, git-annex, Git, and Quarto 1.9 or newer. Configure reviewed source roots and publication targets before running release commands.</p>
+</div>
+</div>
+<section id="save-publish-and-retrieve" class="level2">
+<h2 class="anchored" data-anchor-id="save-publish-and-retrieve"><em>Save, publish, and retrieve</em></h2>
+<section id="publication.py" class="level3">
+<h3 class="anchored" data-anchor-id="publication.py"><em><code>publication.py</code></em></h3>
+<div class="manual-procedure emit-source-py callout callout-style-default callout-tip no-icon callout-titled" data-file="{{ emit.project_root }}/src/depot/publication.py" data-manual-kind="procedure">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span><i class="fa-solid fa-person-walking" aria-label="person-walking"></i> Procedure
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">"""DataLad CLI publication to local RIA stores, with fresh-clone verification."""</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="im">from</span> collections.abc <span class="im">import</span> Callable</span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="im">import</span> shutil</span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="im">import</span> subprocess</span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="im">from</span> tempfile <span class="im">import</span> TemporaryDirectory</span>
+<span id="cb1-8"><a href="#cb1-8"></a></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="im">from</span> .config <span class="im">import</span> Config, access_mode, contained</span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="im">from</span> .errors <span class="im">import</span> DepotError</span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="im">from</span> .progress <span class="im">import</span> ProgressCallback, ProgressUpdate, quiet</span>
+<span id="cb1-12"><a href="#cb1-12"></a><span class="im">from</span> .validation <span class="im">import</span> fingerprint, validate_package</span>
+<span id="cb1-13"><a href="#cb1-13"></a></span>
+<span id="cb1-14"><a href="#cb1-14"></a></span>
+<span id="cb1-15"><a href="#cb1-15"></a><span class="kw">def</span> command(args: <span class="bu">list</span>[<span class="bu">str</span>], cwd: Path <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb1-16"><a href="#cb1-16"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-17"><a href="#cb1-17"></a>        result <span class="op">=</span> subprocess.run(args, cwd<span class="op">=</span>cwd, check<span class="op">=</span><span class="va">True</span>, capture_output<span class="op">=</span><span class="va">True</span>, text<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-18"><a href="#cb1-18"></a>        <span class="cf">return</span> result.stdout.strip()</span>
+<span id="cb1-19"><a href="#cb1-19"></a>    <span class="cf">except</span> <span class="pp">FileNotFoundError</span> <span class="im">as</span> exc:</span>
+<span id="cb1-20"><a href="#cb1-20"></a>        <span class="cf">raise</span> DepotError(</span>
+<span id="cb1-21"><a href="#cb1-21"></a>            <span class="st">"missing_tool"</span>, <span class="ss">f"Install </span><span class="sc">{</span>args[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> and make it available on PATH."</span></span>
+<span id="cb1-22"><a href="#cb1-22"></a>        ) <span class="im">from</span> exc</span>
+<span id="cb1-23"><a href="#cb1-23"></a>    <span class="cf">except</span> subprocess.CalledProcessError <span class="im">as</span> exc:</span>
+<span id="cb1-24"><a href="#cb1-24"></a>        <span class="co"># Raw stdout/stderr can contain credentials, remote URLs, and private paths.</span></span>
+<span id="cb1-25"><a href="#cb1-25"></a>        <span class="cf">raise</span> DepotError(</span>
+<span id="cb1-26"><a href="#cb1-26"></a>            <span class="st">"command_failed"</span>,</span>
+<span id="cb1-27"><a href="#cb1-27"></a>            <span class="ss">f"</span><span class="sc">{</span>args[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> command failed; check tools, target access, and permissions."</span>,</span>
+<span id="cb1-28"><a href="#cb1-28"></a>            {<span class="st">"operation"</span>: args[<span class="dv">1</span>], <span class="st">"exit_code"</span>: exc.returncode},</span>
+<span id="cb1-29"><a href="#cb1-29"></a>        ) <span class="im">from</span> exc</span>
+<span id="cb1-30"><a href="#cb1-30"></a></span>
+<span id="cb1-31"><a href="#cb1-31"></a></span>
+<span id="cb1-32"><a href="#cb1-32"></a><span class="kw">def</span> materialize(</span>
+<span id="cb1-33"><a href="#cb1-33"></a>    config: Config,</span>
+<span id="cb1-34"><a href="#cb1-34"></a>    manifest: <span class="bu">dict</span>,</span>
+<span id="cb1-35"><a href="#cb1-35"></a>    version: <span class="bu">str</span>,</span>
+<span id="cb1-36"><a href="#cb1-36"></a>    verified: Path,</span>
+<span id="cb1-37"><a href="#cb1-37"></a>    expected: <span class="bu">str</span>,</span>
+<span id="cb1-38"><a href="#cb1-38"></a>    <span class="op">*</span>,</span>
+<span id="cb1-39"><a href="#cb1-39"></a>    on_progress: ProgressCallback <span class="op">=</span> quiet,</span>
+<span id="cb1-40"><a href="#cb1-40"></a>) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb1-41"><a href="#cb1-41"></a>    <span class="co">"""Expose verified bytes as independent ordinary files; never overwrite edits."""</span></span>
+<span id="cb1-42"><a href="#cb1-42"></a>    mode <span class="op">=</span> access_mode(config, manifest)</span>
+<span id="cb1-43"><a href="#cb1-43"></a>    <span class="cf">if</span> mode <span class="op">==</span> <span class="st">"locked"</span>:</span>
+<span id="cb1-44"><a href="#cb1-44"></a>        <span class="cf">return</span> {<span class="st">"mode"</span>: mode, <span class="st">"populated"</span>: <span class="va">False</span>}</span>
+<span id="cb1-45"><a href="#cb1-45"></a>    target <span class="op">=</span> config.targets[manifest[<span class="st">"destination"</span>][<span class="st">"target"</span>]]</span>
+<span id="cb1-46"><a href="#cb1-46"></a>    relative <span class="op">=</span> Path(manifest[<span class="st">"id"</span>] <span class="op">+</span> <span class="st">".data"</span>) <span class="op">/</span> <span class="st">"releases"</span> <span class="op">/</span> version</span>
+<span id="cb1-47"><a href="#cb1-47"></a>    destination <span class="op">=</span> target.root <span class="op">/</span> relative</span>
+<span id="cb1-48"><a href="#cb1-48"></a>    <span class="co"># Reject redirected views even when a symlink stays within the target root.</span></span>
+<span id="cb1-49"><a href="#cb1-49"></a>    <span class="cf">for</span> path <span class="kw">in</span> (destination, <span class="op">*</span>destination.parents):</span>
+<span id="cb1-50"><a href="#cb1-50"></a>        <span class="cf">if</span> path <span class="op">==</span> target.root:</span>
+<span id="cb1-51"><a href="#cb1-51"></a>            <span class="cf">break</span></span>
+<span id="cb1-52"><a href="#cb1-52"></a>        <span class="cf">if</span> path.is_symlink():</span>
+<span id="cb1-53"><a href="#cb1-53"></a>            <span class="cf">raise</span> DepotError(</span>
+<span id="cb1-54"><a href="#cb1-54"></a>                <span class="st">"unsafe_path"</span>, <span class="st">"The ordinary-file view cannot contain directory symlinks."</span></span>
+<span id="cb1-55"><a href="#cb1-55"></a>            )</span>
+<span id="cb1-56"><a href="#cb1-56"></a>    destination <span class="op">=</span> contained(destination, target.root)</span>
+<span id="cb1-57"><a href="#cb1-57"></a>    on_progress(ProgressUpdate(<span class="st">"Preparing populated, unlocked Goldmine files"</span>))</span>
+<span id="cb1-58"><a href="#cb1-58"></a>    <span class="cf">if</span> destination.exists():</span>
+<span id="cb1-59"><a href="#cb1-59"></a>        <span class="cf">if</span> fingerprint(destination, on_progress<span class="op">=</span>on_progress) <span class="op">!=</span> expected:</span>
+<span id="cb1-60"><a href="#cb1-60"></a>            <span class="cf">raise</span> DepotError(</span>
+<span id="cb1-61"><a href="#cb1-61"></a>                <span class="st">"access_conflict"</span>,</span>
+<span id="cb1-62"><a href="#cb1-62"></a>                <span class="st">"Goldmine ordinary files have changed; preserve edits and restore or relocate the view before retrying."</span>,</span>
+<span id="cb1-63"><a href="#cb1-63"></a>            )</span>
+<span id="cb1-64"><a href="#cb1-64"></a>    <span class="cf">else</span>:</span>
+<span id="cb1-65"><a href="#cb1-65"></a>        destination.parent.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-66"><a href="#cb1-66"></a>        <span class="cf">with</span> TemporaryDirectory(prefix<span class="op">=</span><span class="st">".populate-"</span>, <span class="bu">dir</span><span class="op">=</span>destination.parent) <span class="im">as</span> temporary:</span>
+<span id="cb1-67"><a href="#cb1-67"></a>            incoming <span class="op">=</span> Path(temporary) <span class="op">/</span> <span class="st">"release"</span></span>
+<span id="cb1-68"><a href="#cb1-68"></a>            <span class="co"># Follow only the annex links already checked by retrieval verification.</span></span>
+<span id="cb1-69"><a href="#cb1-69"></a>            <span class="co"># copyfile creates independent bytes, without inheriting annex read-only modes.</span></span>
+<span id="cb1-70"><a href="#cb1-70"></a>            shutil.copytree(verified, incoming, copy_function<span class="op">=</span>shutil.copyfile)</span>
+<span id="cb1-71"><a href="#cb1-71"></a>            <span class="cf">if</span> fingerprint(incoming, on_progress<span class="op">=</span>on_progress) <span class="op">!=</span> expected:</span>
+<span id="cb1-72"><a href="#cb1-72"></a>                <span class="cf">raise</span> DepotError(</span>
+<span id="cb1-73"><a href="#cb1-73"></a>                    <span class="st">"verification_failed"</span>, <span class="st">"Populated files differ from verified content."</span></span>
+<span id="cb1-74"><a href="#cb1-74"></a>                )</span>
+<span id="cb1-75"><a href="#cb1-75"></a>            incoming.replace(destination)</span>
+<span id="cb1-76"><a href="#cb1-76"></a>    <span class="cf">for</span> path <span class="kw">in</span> destination.rglob(<span class="st">"*"</span>):</span>
+<span id="cb1-77"><a href="#cb1-77"></a>        <span class="cf">if</span> path.is_file():</span>
+<span id="cb1-78"><a href="#cb1-78"></a>            path.chmod(path.stat().st_mode <span class="op">|</span> <span class="bn">0o200</span>)</span>
+<span id="cb1-79"><a href="#cb1-79"></a>    <span class="cf">return</span> {</span>
+<span id="cb1-80"><a href="#cb1-80"></a>        <span class="st">"mode"</span>: mode,</span>
+<span id="cb1-81"><a href="#cb1-81"></a>        <span class="st">"populated"</span>: <span class="va">True</span>,</span>
+<span id="cb1-82"><a href="#cb1-82"></a>        <span class="st">"path"</span>: <span class="bu">str</span>(destination),</span>
+<span id="cb1-83"><a href="#cb1-83"></a>        <span class="st">"relative_path"</span>: relative.as_posix(),</span>
+<span id="cb1-84"><a href="#cb1-84"></a>    }</span>
+<span id="cb1-85"><a href="#cb1-85"></a></span>
+<span id="cb1-86"><a href="#cb1-86"></a></span>
+<span id="cb1-87"><a href="#cb1-87"></a><span class="kw">def</span> publish(</span>
+<span id="cb1-88"><a href="#cb1-88"></a>    config: Config,</span>
+<span id="cb1-89"><a href="#cb1-89"></a>    manifest: <span class="bu">dict</span>,</span>
+<span id="cb1-90"><a href="#cb1-90"></a>    version: <span class="bu">str</span>,</span>
+<span id="cb1-91"><a href="#cb1-91"></a>    staged: Path,</span>
+<span id="cb1-92"><a href="#cb1-92"></a>    expected: <span class="bu">str</span>,</span>
+<span id="cb1-93"><a href="#cb1-93"></a>    on_saved: Callable[[<span class="bu">str</span>], <span class="va">None</span>] <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>,</span>
+<span id="cb1-94"><a href="#cb1-94"></a>    on_progress: ProgressCallback <span class="op">=</span> quiet,</span>
+<span id="cb1-95"><a href="#cb1-95"></a>) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb1-96"><a href="#cb1-96"></a>    on_progress(ProgressUpdate(<span class="st">"Preparing DataLad publication workspace"</span>))</span>
+<span id="cb1-97"><a href="#cb1-97"></a>    dataset_id <span class="op">=</span> manifest[<span class="st">"id"</span>]</span>
+<span id="cb1-98"><a href="#cb1-98"></a>    dataset <span class="op">=</span> config.dataset_path(config.workspace, dataset_id)</span>
+<span id="cb1-99"><a href="#cb1-99"></a>    target <span class="op">=</span> config.targets[manifest[<span class="st">"destination"</span>][<span class="st">"target"</span>]]</span>
+<span id="cb1-100"><a href="#cb1-100"></a>    store <span class="op">=</span> contained(target.root <span class="op">/</span> dataset_id, target.root)</span>
+<span id="cb1-101"><a href="#cb1-101"></a>    store_url <span class="op">=</span> <span class="st">"ria+"</span> <span class="op">+</span> store.as_uri()</span>
+<span id="cb1-102"><a href="#cb1-102"></a>    clone_url <span class="op">=</span> store_url <span class="op">+</span> <span class="st">"#~"</span> <span class="op">+</span> dataset_id</span>
+<span id="cb1-103"><a href="#cb1-103"></a>    config.workspace.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-104"><a href="#cb1-104"></a>    <span class="cf">if</span> <span class="kw">not</span> (dataset <span class="op">/</span> <span class="st">".datalad/config"</span>).is_file():</span>
+<span id="cb1-105"><a href="#cb1-105"></a>        command([<span class="st">"datalad"</span>, <span class="st">"create"</span>, <span class="st">"-d"</span>, <span class="bu">str</span>(dataset), <span class="st">"-D"</span>, <span class="ss">f"Depot dataset </span><span class="sc">{</span>dataset_id<span class="sc">}</span><span class="ss">"</span>])</span>
+<span id="cb1-106"><a href="#cb1-106"></a>    command(</span>
+<span id="cb1-107"><a href="#cb1-107"></a>        [</span>
+<span id="cb1-108"><a href="#cb1-108"></a>            <span class="st">"git"</span>,</span>
+<span id="cb1-109"><a href="#cb1-109"></a>            <span class="st">"config"</span>,</span>
+<span id="cb1-110"><a href="#cb1-110"></a>            <span class="st">"annex.addunlocked"</span>,</span>
+<span id="cb1-111"><a href="#cb1-111"></a>            <span class="bu">str</span>(access_mode(config, manifest) <span class="op">==</span> <span class="st">"unlocked"</span>).lower(),</span>
+<span id="cb1-112"><a href="#cb1-112"></a>        ],</span>
+<span id="cb1-113"><a href="#cb1-113"></a>        cwd<span class="op">=</span>dataset,</span>
+<span id="cb1-114"><a href="#cb1-114"></a>    )</span>
+<span id="cb1-115"><a href="#cb1-115"></a>    destination <span class="op">=</span> contained(dataset <span class="op">/</span> <span class="st">"releases"</span> <span class="op">/</span> version, dataset)</span>
+<span id="cb1-116"><a href="#cb1-116"></a>    <span class="cf">if</span> destination.exists():</span>
+<span id="cb1-117"><a href="#cb1-117"></a>        <span class="co"># On retry the saved worktree may contain annex symlinks.</span></span>
+<span id="cb1-118"><a href="#cb1-118"></a>        <span class="cf">if</span> (</span>
+<span id="cb1-119"><a href="#cb1-119"></a>            fingerprint(destination, dataset <span class="op">/</span> <span class="st">".git/annex/objects"</span>, on_progress<span class="op">=</span>on_progress)</span>
+<span id="cb1-120"><a href="#cb1-120"></a>            <span class="op">!=</span> expected</span>
+<span id="cb1-121"><a href="#cb1-121"></a>        ):</span>
+<span id="cb1-122"><a href="#cb1-122"></a>            <span class="cf">raise</span> DepotError(</span>
+<span id="cb1-123"><a href="#cb1-123"></a>                <span class="st">"version_conflict"</span>, <span class="st">"Managed workspace content conflicts with this version."</span></span>
+<span id="cb1-124"><a href="#cb1-124"></a>            )</span>
+<span id="cb1-125"><a href="#cb1-125"></a>    <span class="cf">else</span>:</span>
+<span id="cb1-126"><a href="#cb1-126"></a>        destination.parent.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-127"><a href="#cb1-127"></a>        <span class="co"># A failed copy must not strand a partial version under its final name.</span></span>
+<span id="cb1-128"><a href="#cb1-128"></a>        <span class="cf">with</span> TemporaryDirectory(prefix<span class="op">=</span><span class="st">".intake-"</span>, <span class="bu">dir</span><span class="op">=</span>dataset) <span class="im">as</span> temporary:</span>
+<span id="cb1-129"><a href="#cb1-129"></a>            incoming <span class="op">=</span> Path(temporary) <span class="op">/</span> <span class="st">"release"</span></span>
+<span id="cb1-130"><a href="#cb1-130"></a>            on_progress(ProgressUpdate(<span class="st">"Copying validated release into DataLad workspace"</span>))</span>
+<span id="cb1-131"><a href="#cb1-131"></a>            shutil.copytree(staged, incoming)</span>
+<span id="cb1-132"><a href="#cb1-132"></a>            <span class="cf">if</span> fingerprint(incoming, on_progress<span class="op">=</span>on_progress) <span class="op">!=</span> expected:</span>
+<span id="cb1-133"><a href="#cb1-133"></a>                <span class="cf">raise</span> DepotError(<span class="st">"source_changed"</span>, <span class="st">"Staged content changed during publication."</span>)</span>
+<span id="cb1-134"><a href="#cb1-134"></a>            incoming.replace(destination)</span>
+<span id="cb1-135"><a href="#cb1-135"></a>    on_progress(ProgressUpdate(<span class="st">"Saving release with DataLad"</span>))</span>
+<span id="cb1-136"><a href="#cb1-136"></a>    command(</span>
+<span id="cb1-137"><a href="#cb1-137"></a>        [</span>
+<span id="cb1-138"><a href="#cb1-138"></a>            <span class="st">"datalad"</span>,</span>
+<span id="cb1-139"><a href="#cb1-139"></a>            <span class="st">"save"</span>,</span>
+<span id="cb1-140"><a href="#cb1-140"></a>            <span class="st">"-d"</span>,</span>
+<span id="cb1-141"><a href="#cb1-141"></a>            <span class="bu">str</span>(dataset),</span>
+<span id="cb1-142"><a href="#cb1-142"></a>            <span class="st">"-m"</span>,</span>
+<span id="cb1-143"><a href="#cb1-143"></a>            <span class="ss">f"Depot release </span><span class="sc">{</span>version<span class="sc">}</span><span class="ss">"</span>,</span>
+<span id="cb1-144"><a href="#cb1-144"></a>            <span class="bu">str</span>(destination),</span>
+<span id="cb1-145"><a href="#cb1-145"></a>        ],</span>
+<span id="cb1-146"><a href="#cb1-146"></a>        cwd<span class="op">=</span>dataset,</span>
+<span id="cb1-147"><a href="#cb1-147"></a>    )</span>
+<span id="cb1-148"><a href="#cb1-148"></a>    <span class="co"># Store the release's own commit, rather than a later dataset HEAD on retry.</span></span>
+<span id="cb1-149"><a href="#cb1-149"></a>    commit <span class="op">=</span> command([<span class="st">"git"</span>, <span class="st">"log"</span>, <span class="st">"-1"</span>, <span class="st">"--format=%H"</span>, <span class="st">"--"</span>, <span class="ss">f"releases/</span><span class="sc">{</span>version<span class="sc">}</span><span class="ss">"</span>], cwd<span class="op">=</span>dataset)</span>
+<span id="cb1-150"><a href="#cb1-150"></a>    <span class="cf">if</span> <span class="kw">not</span> commit:</span>
+<span id="cb1-151"><a href="#cb1-151"></a>        <span class="cf">raise</span> DepotError(<span class="st">"invalid_state"</span>, <span class="st">"No DataLad commit exists for the release."</span>)</span>
+<span id="cb1-152"><a href="#cb1-152"></a>    <span class="cf">if</span> on_saved:</span>
+<span id="cb1-153"><a href="#cb1-153"></a>        on_saved(commit)</span>
+<span id="cb1-154"><a href="#cb1-154"></a>    configured <span class="op">=</span> command([<span class="st">"git"</span>, <span class="st">"remote"</span>], cwd<span class="op">=</span>dataset).splitlines()</span>
+<span id="cb1-155"><a href="#cb1-155"></a>    <span class="cf">if</span> <span class="st">"goldmine"</span> <span class="kw">not</span> <span class="kw">in</span> configured:</span>
+<span id="cb1-156"><a href="#cb1-156"></a>        on_progress(ProgressUpdate(<span class="st">"Creating publication storage sibling"</span>))</span>
+<span id="cb1-157"><a href="#cb1-157"></a>        target.root.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-158"><a href="#cb1-158"></a>        command(</span>
+<span id="cb1-159"><a href="#cb1-159"></a>            [</span>
+<span id="cb1-160"><a href="#cb1-160"></a>                <span class="st">"datalad"</span>,</span>
+<span id="cb1-161"><a href="#cb1-161"></a>                <span class="st">"create-sibling-ria"</span>,</span>
+<span id="cb1-162"><a href="#cb1-162"></a>                <span class="st">"-d"</span>,</span>
+<span id="cb1-163"><a href="#cb1-163"></a>                <span class="bu">str</span>(dataset),</span>
+<span id="cb1-164"><a href="#cb1-164"></a>                <span class="st">"-s"</span>,</span>
+<span id="cb1-165"><a href="#cb1-165"></a>                <span class="st">"goldmine"</span>,</span>
+<span id="cb1-166"><a href="#cb1-166"></a>                <span class="st">"--alias"</span>,</span>
+<span id="cb1-167"><a href="#cb1-167"></a>                dataset_id,</span>
+<span id="cb1-168"><a href="#cb1-168"></a>                <span class="st">"--new-store-ok"</span>,</span>
+<span id="cb1-169"><a href="#cb1-169"></a>                store_url,</span>
+<span id="cb1-170"><a href="#cb1-170"></a>            ],</span>
+<span id="cb1-171"><a href="#cb1-171"></a>            cwd<span class="op">=</span>dataset,</span>
+<span id="cb1-172"><a href="#cb1-172"></a>        )</span>
+<span id="cb1-173"><a href="#cb1-173"></a>    <span class="cf">else</span>:</span>
+<span id="cb1-174"><a href="#cb1-174"></a>        remote <span class="op">=</span> command([<span class="st">"git"</span>, <span class="st">"remote"</span>, <span class="st">"get-url"</span>, <span class="st">"goldmine"</span>], cwd<span class="op">=</span>dataset)</span>
+<span id="cb1-175"><a href="#cb1-175"></a>        <span class="cf">if</span> <span class="kw">not</span> Path(remote).resolve().is_relative_to(store):</span>
+<span id="cb1-176"><a href="#cb1-176"></a>            <span class="cf">raise</span> DepotError(</span>
+<span id="cb1-177"><a href="#cb1-177"></a>                <span class="st">"target_conflict"</span>, <span class="st">"Existing sibling belongs to a different publication target."</span></span>
+<span id="cb1-178"><a href="#cb1-178"></a>            )</span>
+<span id="cb1-179"><a href="#cb1-179"></a>    on_progress(ProgressUpdate(<span class="st">"Pushing release to publication storage"</span>))</span>
+<span id="cb1-180"><a href="#cb1-180"></a>    command(</span>
+<span id="cb1-181"><a href="#cb1-181"></a>        [<span class="st">"datalad"</span>, <span class="st">"push"</span>, <span class="st">"-d"</span>, <span class="bu">str</span>(dataset), <span class="st">"--to"</span>, <span class="st">"goldmine"</span>, <span class="st">"--data"</span>, <span class="st">"anything"</span>],</span>
+<span id="cb1-182"><a href="#cb1-182"></a>        cwd<span class="op">=</span>dataset,</span>
+<span id="cb1-183"><a href="#cb1-183"></a>    )</span>
+<span id="cb1-184"><a href="#cb1-184"></a>    <span class="cf">with</span> TemporaryDirectory(prefix<span class="op">=</span><span class="st">"verify-"</span>, <span class="bu">dir</span><span class="op">=</span>config.staging) <span class="im">as</span> temporary:</span>
+<span id="cb1-185"><a href="#cb1-185"></a>        on_progress(ProgressUpdate(<span class="st">"Cloning published dataset for retrieval verification"</span>))</span>
+<span id="cb1-186"><a href="#cb1-186"></a>        clone <span class="op">=</span> Path(temporary) <span class="op">/</span> <span class="st">"clone"</span></span>
+<span id="cb1-187"><a href="#cb1-187"></a>        command([<span class="st">"datalad"</span>, <span class="st">"clone"</span>, clone_url, <span class="bu">str</span>(clone)])</span>
+<span id="cb1-188"><a href="#cb1-188"></a>        command([<span class="st">"git"</span>, <span class="st">"checkout"</span>, <span class="st">"--detach"</span>, commit], cwd<span class="op">=</span>clone)</span>
+<span id="cb1-189"><a href="#cb1-189"></a>        <span class="co"># Explicitly choose the RIA storage sibling: publisher-local content cannot</span></span>
+<span id="cb1-190"><a href="#cb1-190"></a>        <span class="co"># accidentally satisfy the verification boundary.</span></span>
+<span id="cb1-191"><a href="#cb1-191"></a>        on_progress(ProgressUpdate(<span class="st">"Retrieving published release from storage"</span>))</span>
+<span id="cb1-192"><a href="#cb1-192"></a>        command(</span>
+<span id="cb1-193"><a href="#cb1-193"></a>            [</span>
+<span id="cb1-194"><a href="#cb1-194"></a>                <span class="st">"datalad"</span>,</span>
+<span id="cb1-195"><a href="#cb1-195"></a>                <span class="st">"get"</span>,</span>
+<span id="cb1-196"><a href="#cb1-196"></a>                <span class="st">"-d"</span>,</span>
+<span id="cb1-197"><a href="#cb1-197"></a>                <span class="bu">str</span>(clone),</span>
+<span id="cb1-198"><a href="#cb1-198"></a>                <span class="st">"--source"</span>,</span>
+<span id="cb1-199"><a href="#cb1-199"></a>                <span class="st">"goldmine-storage"</span>,</span>
+<span id="cb1-200"><a href="#cb1-200"></a>                <span class="bu">str</span>(clone <span class="op">/</span> <span class="st">"releases"</span> <span class="op">/</span> version),</span>
+<span id="cb1-201"><a href="#cb1-201"></a>            ],</span>
+<span id="cb1-202"><a href="#cb1-202"></a>            cwd<span class="op">=</span>clone,</span>
+<span id="cb1-203"><a href="#cb1-203"></a>        )</span>
+<span id="cb1-204"><a href="#cb1-204"></a>        retrieved <span class="op">=</span> clone <span class="op">/</span> <span class="st">"releases"</span> <span class="op">/</span> version</span>
+<span id="cb1-205"><a href="#cb1-205"></a>        on_progress(ProgressUpdate(<span class="st">"Verifying retrieved release fingerprint"</span>))</span>
+<span id="cb1-206"><a href="#cb1-206"></a>        <span class="cf">if</span> (</span>
+<span id="cb1-207"><a href="#cb1-207"></a>            fingerprint(retrieved, clone <span class="op">/</span> <span class="st">".git/annex/objects"</span>, on_progress<span class="op">=</span>on_progress)</span>
+<span id="cb1-208"><a href="#cb1-208"></a>            <span class="op">!=</span> expected</span>
+<span id="cb1-209"><a href="#cb1-209"></a>        ):</span>
+<span id="cb1-210"><a href="#cb1-210"></a>            <span class="cf">raise</span> DepotError(</span>
+<span id="cb1-211"><a href="#cb1-211"></a>                <span class="st">"verification_failed"</span>, <span class="st">"Fresh retrieval does not match the validated content."</span></span>
+<span id="cb1-212"><a href="#cb1-212"></a>            )</span>
+<span id="cb1-213"><a href="#cb1-213"></a>        on_progress(ProgressUpdate(<span class="st">"Validating retrieved release"</span>))</span>
+<span id="cb1-214"><a href="#cb1-214"></a>        validate_package(</span>
+<span id="cb1-215"><a href="#cb1-215"></a>            retrieved, manifest[<span class="st">"checks"</span>], clone <span class="op">/</span> <span class="st">".git/annex/objects"</span>, on_progress<span class="op">=</span>on_progress</span>
+<span id="cb1-216"><a href="#cb1-216"></a>        )</span>
+<span id="cb1-217"><a href="#cb1-217"></a>        access <span class="op">=</span> materialize(</span>
+<span id="cb1-218"><a href="#cb1-218"></a>            config, manifest, version, retrieved, expected, on_progress<span class="op">=</span>on_progress</span>
+<span id="cb1-219"><a href="#cb1-219"></a>        )</span>
+<span id="cb1-220"><a href="#cb1-220"></a>    on_progress(ProgressUpdate(<span class="st">"Publication and fresh retrieval verified"</span>))</span>
+<span id="cb1-221"><a href="#cb1-221"></a>    <span class="cf">return</span> {</span>
+<span id="cb1-222"><a href="#cb1-222"></a>        <span class="st">"commit"</span>: commit,</span>
+<span id="cb1-223"><a href="#cb1-223"></a>        <span class="st">"target"</span>: <span class="bu">str</span>(store),</span>
+<span id="cb1-224"><a href="#cb1-224"></a>        <span class="st">"clone_url"</span>: clone_url,</span>
+<span id="cb1-225"><a href="#cb1-225"></a>        <span class="st">"verified"</span>: <span class="va">True</span>,</span>
+<span id="cb1-226"><a href="#cb1-226"></a>        <span class="st">"access"</span>: access,</span>
+<span id="cb1-227"><a href="#cb1-227"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div class="manual-check callout callout-style-default callout-warning no-icon callout-titled" data-manual-kind="check">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><i class="fa-solid fa-clipboard-check" aria-label="clipboard-check"></i> Check
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>After editing this manual, emit source explicitly with <code>scripts/render-isolated --profile emit</code>, run <code>uv run pytest</code>, and check the Git diff. Ordinary website rendering leaves emitted source unchanged. A skipped integration test is not evidence of retrievable publication.</p>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

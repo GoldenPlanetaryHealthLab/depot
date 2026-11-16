@@ -17,7 +17,6 @@ wheels/
 /notebooks/*.html
 /notebooks/.ipynb_checkpoints/
 **/*.quarto_ipynb
-docs/**
 !docs/.gitkeep
 /.depot/
 /depot.toml
